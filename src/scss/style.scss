@@ -1,0 +1,33 @@
+%graph-segment {
+	transition: stroke-dasharray 1s ease;
+}
+
+.jchart {
+	width: 400px;
+	height: 400px;
+
+	&--body {
+		width: 100%;
+		height: 100%;
+	}
+
+	&--donut {
+		&--ring {
+
+		}
+
+		&--hole {
+
+		}
+
+		&--segment {
+			@extend %graph-segment;
+		}
+	}
+
+	&pie {
+		&--segment {
+			@extend %graph-segment;
+		}
+	}
+}

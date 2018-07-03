@@ -27,11 +27,6 @@
 			overflow-x: hidden;
 		}
 
-		.jchart {
-			width: 400px;
-			height: 400px;
-		}
-
 		* {
 			-webkit-box-sizing: border-box;
 			-moz-box-sizing: border-box;
@@ -49,7 +44,24 @@
     let jchart;
     $(function () {
         jchart = $("#element").jChart({
-
+			data: [
+				{
+				    value: 300
+				},
+                {
+                    value: 100,
+					color: '#77dd4f',
+					draw: true, //false
+					push: true //false
+                },
+                {
+                    value: 100,
+                    color: '#dd5723'
+                }
+			],
+			appearance: {
+			    type: 'pie'
+			}
         });
     });
 </script>

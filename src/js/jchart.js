@@ -30,11 +30,18 @@
                 container: null,
                 body: null,
             },
-            data: {
-                value: 0,
-                maxvalue: 0,
+            data: [],
+            values: {}, // values necessary for the graphing, like sum of values of all segments
+            placeholder: {
+                data: {
+                    value: 0, // value of the segment
+                    color: '#00a3f2', // stroke color of the segment
+                    draw: true, // whether to draw the segment on the chart or not; default true
+                    push: true // whether to push the next segment via offset. Best to set false together when draw is set to false (the empty section will always be at the end that way); default true
+                }
             },
             appearance: {
+                type: 'donut',
                 baseColor: '#ddd',
                 segmentColor: '#00a3f2',
                 baseOffset: 0,
@@ -90,7 +97,47 @@
          * Main function for initializing
          */
         initElement() {
+            // calculate the values
+            objThis.calculateDataValues();
+
+            // draw html
             objThis.initHtml();
+        },
+
+        /*
+         * Calculate the necessary values for graphing (maxval, percentage value of each segment)
+         */
+        calculateDataValues() {
+            const values = {
+                maxval: 0,
+            };
+            const data = objThis.settings.data;
+            // calculate the sum data values
+            for (const segment in data) {
+                if (data.hasOwnProperty(segment)) {
+                    data[segment] = $.extend(true, {}, objThis.settings.placeholder.data, data[segment]);
+                    values.maxval += data[segment].value;
+                }
+            }
+
+            console.log(data);
+            console.log(values.maxval);
+
+            // calculate the single data values
+            for (const segment in data) {
+                if (data.hasOwnProperty(segment)) {
+                    if (values.maxval === 0) {
+                        data[segment].percentage_raw = 0;
+                        data[segment].percentage = 0;
+                    } else {
+                        data[segment].percentage_raw = data[segment].value / values.maxval;
+                        data[segment].percentage = (data[segment].value / values.maxval) * 100;
+                    }
+                }
+            }
+
+            objThis.settings.data = data;
+            objThis.settings.values = values;
         },
 
         /*
@@ -110,48 +157,57 @@
             objThis.$element.append($html);
         },
 
+        /*
+         * Draw chart body
+         */
+        drawBody() {
+            const $html = $('<div>', {'class': objPrefix + 'body'});
+            objThis.settings.elements.body = $html;
+            objThis.settings.elements.container.append($html);
+
+            objThis.drawBodyBase();
+        },
+
         drawBodyBase() {
-            //const $html_svg = $('<svg>', {'class': objPrefix + 'donut', 'width': '100%', 'height': '100%', 'viewBox': '0 0 42 42'});
+            // render data into the graph
+            const data = objThis.settings.data;
+            const values = objThis.settings.values;
+            let graphData = null;
+            let svg = null;
+            let svgElement = null;
+            let segments = [];
 
-            const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-            svg.setAttribute('class', objPrefix + 'donut');
-            svg.setAttribute('width', '100%');
-            svg.setAttribute('height', '100%');
-            svg.setAttribute('viewBox', '0 0 42 42'); // double cx and cy
-            svg.setAttributeNS("http://www.w3.org/2000/xmlns/", "xmlns:xlink", "http://www.w3.org/1999/xlink");
+            switch (objThis.settings.appearance.type) {
+                case 'donut':
+                    graphData = objThis.drawBodyBaseDonut();
 
-            const donutRing = objThis.drawSvgCircle({
-                class: objPrefix + 'donut--ring',
-                fill: 'transparent',
-                stroke: objThis.settings.appearance.baseColor,
-                'stroke-width': 3
-            });
-            // const donutHole = objThis.drawSvgCircle({
-            //     class: objPrefix + 'donut--hole'
-            // });
-            const donutSegment = objThis.drawSvgCircle({
-                class: objPrefix + 'donut--segment',
-                fill: 'transparent',
-                stroke: objThis.settings.appearance.segmentColor,
-                'stroke-width': 3,
-                'stroke-dasharray': '85 15', // Circumference − All preceding segments’ total length + First segment’s offset = Current segment offset
-            });
-            const donutSegment2 = objThis.drawSvgCircle({
-                class: objPrefix + 'donut--segment',
-                fill: 'transparent',
-                stroke: '#ce4b99',
-                'stroke-width': 3,
-                'stroke-dasharray': '15 85',
-                'stroke-dashoffset': '40',
-            });
+                    svg = graphData['svg'];
+                    segments = objThis.drawBodySegmentDonut(data, values);
 
-            const svgElement = objThis.settings.elements.body[0].appendChild(svg);
-            svgElement.appendChild(donutRing);
-            //svgElement.appendChild(donutHole);
-            svgElement.appendChild(donutSegment);
-            svgElement.appendChild(donutSegment2);
+                    svgElement = objThis.settings.elements.body[0].appendChild(svg);
+                    svgElement.appendChild(graphData['ring']);
+                    //svgElement.appendChild(graphData['hole']);
+                    break;
+                case 'pie':
+                    graphData = objThis.drawBodyBasePie();
+
+                    svg = graphData['svg'];
+                    segments = objThis.drawBodySegmentPie(data, values);
+
+                    svgElement = objThis.settings.elements.body[0].appendChild(svg);
+                    break;
+                default:
+                    break;
+            }
+
+            for (const segment in segments) {
+                if (segments.hasOwnProperty(segment)) {
+                    svgElement.appendChild(segments[segment]);
+                }
+            }
 
             /* jQuery (doesn't work properly) */
+            // const $html_svg = $('<svg>', {'class': objPrefix + 'donut', 'width': '100%', 'height': '100%', 'viewBox': '0 0 42 42'});
             // const $html_hole = $('<circle>', {'class': objPrefix + 'donut--hole', 'cx': 21, 'cy': 21, 'r': 15.91549430918954, 'fill': '#fff'});
             // const $html_ring = $('<circle>', {'class': objPrefix + 'donut--ring', 'cx': 21, 'cy': 21, 'r': 15.91549430918954, 'fill': 'transparent', 'stroke': '#d2d3d4', 'stroke-width': 3});
 
@@ -166,6 +222,134 @@
             // $html_svg.append($html_hole).append($html_ring);
         },
 
+        /* DONUT */
+
+        drawBodyBaseDonut() {
+            const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            svg.setAttribute('class', objPrefix + 'donut');
+            svg.setAttribute('width', '100%');
+            svg.setAttribute('height', '100%');
+            svg.setAttribute('viewBox', '0 0 42 42'); // double cx and cy
+            svg.setAttributeNS("http://www.w3.org/2000/xmlns/", "xmlns:xlink", "http://www.w3.org/1999/xlink");
+
+            const donutRing = objThis.drawSvgCircle({
+                class: objPrefix + 'donut--ring',
+                fill: 'transparent',
+                stroke: objThis.settings.appearance.baseColor,
+                'stroke-width': 3
+            });
+            const donutHole = null;
+            // const donutHole = objThis.drawSvgCircle({
+            //     class: objPrefix + 'donut--hole'
+            // });
+
+            return {'svg': svg, 'ring': donutRing, 'hole': donutHole};
+        },
+
+        drawBodySegmentDonut(data, values) {
+            let segments = [];
+
+            const base_offset = 25; // base offset set to 25 to make the chart start from the top
+            let offset = 0; //offset for dashoffset parameter, increased after every segment is drawn and supplied to dashoffset parameter for the next segment
+
+            for (const segment in data) {
+                if (data.hasOwnProperty(segment)) {
+                    const local_offset = (100 - data[segment]['percentage']);
+
+                    if (data[segment]['draw'] === true) {
+                        // if color is empty, supply the default color from appearance settings
+                        if (typeof data[segment]['color'] === 'undefined') {
+                            data[segment]['color'] = objThis.settings.appearance.segmentColor;
+                        }
+
+                        const donutSegment = objThis.drawSvgCircle({
+                            class: objPrefix + 'donut--segment',
+                            fill: 'transparent',
+                            stroke: data[segment]['color'],
+                            'stroke-width': 3,
+                            'stroke-dasharray': (data[segment]['percentage']) + ' ' + local_offset,// '85 15',
+                            'stroke-dashoffset': base_offset + offset
+                        });
+
+                        segments.push(donutSegment);
+                    }
+
+                    if (data[segment]['push'] === true) {
+                        offset += local_offset;
+                    }
+                }
+            }
+
+            return segments;
+        },
+
+        /* PIE */
+
+        drawBodyBasePie() {
+            const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            svg.setAttribute('class', objPrefix + 'pie');
+            svg.setAttribute('width', '100%');
+            svg.setAttribute('height', '100%');
+            svg.setAttribute('viewBox', '-1 -1 2 2'); // -1 -1 for the offset so that the center point of the circle will be the start for sin and cos functions. 2 2 to simplify the calculations (center at [1,1])
+            svg.setAttribute('style', 'transform: rotate(-0.25turn)'); //rotate 25% counter-clockwise so the start point is at the top
+            svg.setAttributeNS("http://www.w3.org/2000/xmlns/", "xmlns:xlink", "http://www.w3.org/1999/xlink");
+
+            return {'svg': svg};
+        },
+
+        drawBodySegmentPie(data, values) {
+            let segments = [];
+
+            const base_offset = 0; // base offset set to 0 to make the chart start from the top
+            let offset = 0; //offset for the next segment
+
+            for (const segment in data) {
+                if (data.hasOwnProperty(segment)) {
+                    if (data[segment]['draw'] === true) {
+                        // if color is empty, supply the default color from appearance settings
+                        if (typeof data[segment]['color'] === 'undefined') {
+                            data[segment]['color'] = objThis.settings.appearance.segmentColor;
+                        }
+
+                        const startCoordinates = objThis.getCoordinatesForPercent(base_offset + offset);
+
+                        offset += data[segment]['percentage_raw'];
+
+                        const endCoordinates = objThis.getCoordinatesForPercent(offset);
+
+                        const startX = startCoordinates['x'];
+                        const startY = startCoordinates['y'];
+                        const endX = endCoordinates['x'];
+                        const endY = endCoordinates['y'];
+
+                        const largeArcFlag = data[segment]['percentage_raw'] > .5 ? 1 : 0;
+
+                        const pathData = [
+                            `M ${startX} ${startY}`,
+                            `A 1 1 0 ${largeArcFlag} 1 ${endX} ${endY}`,
+                            `L 0 0`,
+                        ].join(' ');
+
+                        const donutSegment = objThis.drawSvgPath({
+                            class: objPrefix + 'pie--segment',
+                            fill: data[segment]['color'],
+                            d: pathData
+                        });
+
+                        segments.push(donutSegment);
+                    } else {
+                        if (data[segment]['push'] === true) {
+                            offset += data[segment]['percentage_raw'];
+                        }
+                    }
+                }
+            }
+
+            return segments;
+        },
+
+        /* --- SVG helpers--- */
+
         drawSvgCircle(options) {
             const defaults = {
                 'class': '',
@@ -176,42 +360,52 @@
                 'stroke': '', // #000
                 'stroke-width': 0,
                 'stroke-dasharray': '',
-                'stroke-dashoffset': '25',
+                'stroke-dashoffset': '25', // Circumference − All preceding segments’ total length + First segment’s offset = Current segment offset
             };
             const settings = $.extend(true, {}, defaults, options);
 
             const nCircle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-            nCircle.setAttributeNS(null, "class", settings.class);
-            nCircle.setAttributeNS(null, "cx", settings.cx);
-            nCircle.setAttributeNS(null, "cy", settings.cy);
-            nCircle.setAttributeNS(null, "r", settings.r);
-            nCircle.setAttributeNS(null, "fill", settings.fill);
-            if (settings.stroke)
-                nCircle.setAttributeNS(null, "stroke", settings.stroke);
-            if (settings['stroke-width'])
-                nCircle.setAttributeNS(null, "stroke-width", settings['stroke-width']);
-            if (settings['stroke-dasharray'])
-                nCircle.setAttributeNS(null, "stroke-dasharray", settings['stroke-dasharray']);
-            if (settings['stroke-dashoffset'])
-                nCircle.setAttributeNS(null, "stroke-dashoffset", settings['stroke-dashoffset']);
+
+            for (const attribute in settings) {
+                if (settings.hasOwnProperty(attribute) && attribute !== '' && attribute !== 0) {
+                    nCircle.setAttributeNS(null, attribute, settings[attribute]);
+                }
+            }
 
             return nCircle;
         },
 
-        drawBodySegment() {
+        drawSvgPath(options) {
+            const defaults = {
+                'class': '',
+                'fill': '#fff',
+                'd': '',
+                'stroke': '', // #000
+                'stroke-width': 0,
+                'stroke-dasharray': '',
+                'stroke-dashoffset': 0, // Circumference − All preceding segments’ total length + First segment’s offset = Current segment offset
+            };
+            const settings = $.extend(true, {}, defaults, options);
 
+            const nPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+
+            for (const attribute in settings) {
+                if (settings.hasOwnProperty(attribute) && attribute !== '' && attribute !== 0) {
+                    nPath.setAttributeNS(null, attribute, settings[attribute]);
+                }
+            }
+
+            return nPath;
         },
 
-        /*
-         * Draw chart body
-         */
-        drawBody() {
-            const $html = $('<div>', {'class': objPrefix + 'body'});
-            objThis.settings.elements.body = $html;
-            objThis.settings.elements.container.append($html);
+        getCoordinatesForPercent(percent) {
+            const x = Math.cos(2 * Math.PI * percent);
+            const y = Math.sin(2 * Math.PI * percent);
 
-            objThis.drawBodyBase();
+            return {x: x, y: y};
         },
+
+        /* --- /SVG helpers--- */
 
         /* ------------------------------ HELPERS ------------------------------- */
 
