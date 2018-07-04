@@ -81,7 +81,9 @@
                 baseStrokeWidth: 4,
             },
             callbacks: {
-                onSegmentMouseover: function(segment) {
+                onSegmentMouseover: function(did, segment) {
+                    // console.log(did);
+                    // console.log(segment);
                 }
             }
         });
@@ -115,8 +117,9 @@
 				baseStrokeWidth: 4,
 			},
 			callbacks: {
-			    onSegmentMouseover: function(segment) {
-
+			    onSegmentMouseover: function(did, segment) {
+                    // console.log(did);
+                    // console.log(segment);
 				}
 			}
         });
@@ -141,7 +144,8 @@
             },
             callbacks: {
                 onSegmentMouseover: function(did, segment) {
-                    console.log(did);
+                    // console.log(did);
+                    // console.log(segment);
                 }
             }
         });

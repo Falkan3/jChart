@@ -295,7 +295,7 @@
 
                         // On Segment Mouseout callback
                         if (instance.settings.callbacks.onSegmentMouseout && $.isFunction(instance.settings.callbacks.onSegmentMouseout)) {
-                            instance.settings.callbacks.onSegmentMouseout.call(instance, instance.settings.data[dId]);
+                            instance.settings.callbacks.onSegmentMouseout.call(instance, instance.settings.data[dId], instance.settings.data[dId]);
                         }
                     });
                 }
