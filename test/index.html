@@ -50,17 +50,31 @@
 				},
                 {
                     value: 100,
-					color: '#77dd4f',
+					color: {
+                        normal: '#77dd4f',
+						active: '#b0ff9f',
+					},
 					draw: true, //false
-					push: true //false
+					push: true, //false
                 },
                 {
                     value: 100,
-                    color: '#dd5723'
+                    color: {
+                        normal: '#dd5723',
+                        active: '#fa6025',
+                    },
+					order: 1
                 }
 			],
 			appearance: {
-			    type: 'pie'
+			    type: 'donut',
+				baseColor: 'transparent',
+				//gap: 0
+			},
+			callbacks: {
+			    onSegmentMouseover: function(segment) {
+
+				}
 			}
         });
     });

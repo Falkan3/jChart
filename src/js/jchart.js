@@ -29,26 +29,37 @@
             elements: {
                 container: null,
                 body: null,
+                segments: []
             },
             data: [],
             values: {}, // values necessary for the graphing, like sum of values of all segments
             placeholder: {
                 data: {
                     value: 0, // value of the segment
-                    color: '#00a3f2', // stroke color of the segment
+                    color: {
+                        normal: '#00a3f2', // stroke/fill color of the segment
+                        active: '#00d8f2',
+                    },
                     draw: true, // whether to draw the segment on the chart or not; default true
-                    push: true // whether to push the next segment via offset. Best to set false together when draw is set to false (the empty section will always be at the end that way); default true
+                    push: true, // whether to push the next segment via offset. Best to set false together when draw is set to false (the empty section will always be at the end that way); default true
+                    order: null, // drawing order
+                    name: ''
                 }
             },
             appearance: {
                 type: 'donut',
                 baseColor: '#ddd',
-                segmentColor: '#00a3f2',
-                baseOffset: 0,
+                segmentColor: {
+                    normal: '#00a3f2',
+                    active: '#00d8f2',
+                },
+                baseOffset: 0, // offset for starting point of first segment
+                gap: 1, // gap between segments for donut chart (in percentage, 1 = 1%)
             },
             callbacks: {
-                onInit() {
-                }
+                onInit() {},
+                onSegmentMouseover() {},
+                onSegmentMouseout() {}
             }
         };
     let objThis = null;
@@ -112,6 +123,7 @@
                 maxval: 0,
             };
             const data = objThis.settings.data;
+
             // calculate the sum data values
             for (const segment in data) {
                 if (data.hasOwnProperty(segment)) {
@@ -136,7 +148,19 @@
                 }
             }
 
-            objThis.settings.data = data;
+            // sort data by their order parameter
+            function compare(a,b) {
+                if(a['order'] === null) return 1;
+                if(b['order'] === null) return -1;
+                if (a['order'] < b['order'])
+                    return -1;
+                if (a['order'] > b['order'])
+                    return 1;
+                return 0;
+            }
+            data.sort(compare);
+
+            //objThis.settings.data = data;
             objThis.settings.values = values;
         },
 
@@ -166,6 +190,7 @@
             objThis.settings.elements.container.append($html);
 
             objThis.drawBodyBase();
+            objThis.addEventListeners();
         },
 
         drawBodyBase() {
@@ -200,26 +225,93 @@
                     break;
             }
 
-            for (const segment in segments) {
-                if (segments.hasOwnProperty(segment)) {
-                    svgElement.appendChild(segments[segment]);
+            /* ******* jQuery element in settings.elements array approach ******* */
+
+            // for (const segment in segments) {
+            //     if (segments.hasOwnProperty(segment)) {
+            //         const segmentElement = svgElement.appendChild(segments[segment]);
+            //         objThis.settings.elements.segments.push({data_id: objThis.settings.elements.segments.length, element: $(segmentElement)});
+            //     }
+            // }
+
+            /* ******* jQuery element in settings.data array approach ******* */
+
+            for (const item in data) {
+                if (data.hasOwnProperty(item)) {
+                    const segment = data[item]['element'];
+                    const segmentElement = svgElement.appendChild(segment);
+                    const $segmentElement = $(segmentElement);
+                    data[item]['element'] = $segmentElement;
+                    objThis.settings.elements.segments.push($segmentElement);
+                }
+            }
+        },
+
+        addEventListeners() {
+            /* ******* jQuery element in settings.data array approach ******* */
+
+            const items = objThis.settings.data;
+            for (const item in items) {
+                if (items.hasOwnProperty(item)) {
+                    const segment = items[item]['element'];
+                    segment.on('mouseover', function () {
+                        const $this = $(this);
+                        segment.removeClass('active');
+                        $this.addClass('active');
+                        switch(objThis.settings.appearance.type) {
+                            case 'donut':
+                                $this.css('stroke', items[item]['color']['active']);
+                                break;
+                            case 'pie':
+                                $this.css('fill', items[item]['color']['active']);
+                                break;
+                        }
+
+                        // On Segment Mouseover callback
+                        if (objThis.settings.callbacks.onSegmentMouseover && $.isFunction(objThis.settings.callbacks.onSegmentMouseover)) {
+                            objThis.settings.callbacks.onSegmentMouseover.call(objThis, items[item]);
+                        }
+                    });
+                    segment.on('mouseout', function () {
+                        const $this = $(this);
+                        $this.removeClass('active');
+                        switch(objThis.settings.appearance.type) {
+                            case 'donut':
+                                $this.css('stroke', '');
+                                break;
+                            case 'pie':
+                                $this.css('fill', '');
+                                break;
+                        }
+
+                        // On Segment Mouseout callback
+                        if (objThis.settings.callbacks.onSegmentMouseout && $.isFunction(objThis.settings.callbacks.onSegmentMouseout)) {
+                            objThis.settings.callbacks.onSegmentMouseout.call(objThis, items[item]);
+                        }
+                    });
                 }
             }
 
-            /* jQuery (doesn't work properly) */
-            // const $html_svg = $('<svg>', {'class': objPrefix + 'donut', 'width': '100%', 'height': '100%', 'viewBox': '0 0 42 42'});
-            // const $html_hole = $('<circle>', {'class': objPrefix + 'donut--hole', 'cx': 21, 'cy': 21, 'r': 15.91549430918954, 'fill': '#fff'});
-            // const $html_ring = $('<circle>', {'class': objPrefix + 'donut--ring', 'cx': 21, 'cy': 21, 'r': 15.91549430918954, 'fill': 'transparent', 'stroke': '#d2d3d4', 'stroke-width': 3});
+            /* ******* jQuery element in settings.elements array approach ******* */
 
-            // $('<svg width="100%" height="100%" viewBox="0 0 42 42" class="donut">\n' +
-            // '  <circle class="donut-hole" cx="21" cy="21" r="15.91549430918954" fill="#fff"></circle>\n' +
-            // '  <circle class="donut-ring" cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#d2d3d4" stroke-width="3"></circle>\n' +
-            // '\n' +
-            // '  <circle class="donut-segment" cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#ce4b99" stroke-width="3"></circle>\n' +
-            // '</svg>');
-
-            //$html_svg.attr({width: '100%', height: '100%'})
-            // $html_svg.append($html_hole).append($html_ring);
+            // const segments = objThis.settings.elements.segments;
+            // for (const segment in segments) {
+            //     if (segments.hasOwnProperty(segment)) {
+            //         const data = objThis.settings.data[segments[segment]['data_id']];
+            //         const $element = segments[segment]['element'];
+            //         $element.on('mouseover', function () {
+            //             const $this = $(this);
+            //             $element.removeClass('active');
+            //             $this.addClass('active');
+            //             $this.css('fill', data['color']['active']);
+            //         });
+            //         $element.on('mouseout', function () {
+            //             const $this = $(this);
+            //             $this.removeClass('active');
+            //             $this.css('fill', '');
+            //         });
+            //     }
+            // }
         },
 
         /* DONUT */
@@ -251,6 +343,7 @@
 
             const base_offset = 25; // base offset set to 25 to make the chart start from the top
             let offset = 0; //offset for dashoffset parameter, increased after every segment is drawn and supplied to dashoffset parameter for the next segment
+            const gap = objThis.settings.appearance.gap; // gap between segments
 
             for (const segment in data) {
                 if (data.hasOwnProperty(segment)) {
@@ -258,19 +351,24 @@
 
                     if (data[segment]['draw'] === true) {
                         // if color is empty, supply the default color from appearance settings
-                        if (typeof data[segment]['color'] === 'undefined') {
-                            data[segment]['color'] = objThis.settings.appearance.segmentColor;
+                        if (typeof data[segment]['color']['normal'] === 'undefined') {
+                            data[segment]['color']['normal'] = objThis.settings.appearance.segmentColor.normal;
+                        }
+                        if (typeof data[segment]['color']['active'] === 'undefined') {
+                            data[segment]['color']['active'] = objThis.settings.appearance.segmentColor.active;
                         }
 
                         const donutSegment = objThis.drawSvgCircle({
                             class: objPrefix + 'donut--segment',
                             fill: 'transparent',
-                            stroke: data[segment]['color'],
+                            stroke: data[segment]['color']['normal'],
                             'stroke-width': 3,
-                            'stroke-dasharray': (data[segment]['percentage']) + ' ' + local_offset,// '85 15',
+                            'stroke-dasharray': (data[segment]['percentage'] - gap) + ' ' + (local_offset + gap),// '85 15',
                             'stroke-dashoffset': base_offset + offset
                         });
 
+                        /* ******* jQuery element in settings.data array approach ******* */
+                        data[segment]['element'] = donutSegment;
                         segments.push(donutSegment);
                     }
 
@@ -307,8 +405,11 @@
                 if (data.hasOwnProperty(segment)) {
                     if (data[segment]['draw'] === true) {
                         // if color is empty, supply the default color from appearance settings
-                        if (typeof data[segment]['color'] === 'undefined') {
-                            data[segment]['color'] = objThis.settings.appearance.segmentColor;
+                        if (typeof data[segment]['color']['normal'] === 'undefined') {
+                            data[segment]['color']['normal'] = objThis.settings.appearance.segmentColor.normal;
+                        }
+                        if (typeof data[segment]['color']['active'] === 'undefined') {
+                            data[segment]['color']['active'] = objThis.settings.appearance.segmentColor.active;
                         }
 
                         const startCoordinates = objThis.getCoordinatesForPercent(base_offset + offset);
@@ -332,10 +433,12 @@
 
                         const donutSegment = objThis.drawSvgPath({
                             class: objPrefix + 'pie--segment',
-                            fill: data[segment]['color'],
+                            fill: data[segment]['color']['normal'],
                             d: pathData
                         });
 
+                        /* ******* jQuery element in settings.data array approach ******* */
+                        data[segment]['element'] = donutSegment;
                         segments.push(donutSegment);
                     } else {
                         if (data[segment]['push'] === true) {
@@ -364,7 +467,7 @@
             };
             const settings = $.extend(true, {}, defaults, options);
 
-            const nCircle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            const nCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
 
             for (const attribute in settings) {
                 if (settings.hasOwnProperty(attribute) && attribute !== '' && attribute !== 0) {
@@ -403,6 +506,18 @@
             const y = Math.sin(2 * Math.PI * percent);
 
             return {x: x, y: y};
+        },
+
+        /*
+         * Input: ([R, G, B], -100~100)
+         * ([135, 10, 0], -50)
+         */
+        lightenRgbColors(c, n) {
+            let d;
+            for (let i = 3; i--; c[i] = d < 0 ? 0 : d > 255 ? 255 : d | 0) {
+                d = c[i] + n;
+            }
+            return c
         },
 
         /* --- /SVG helpers--- */
