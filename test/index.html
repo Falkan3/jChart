@@ -27,6 +27,12 @@
 			overflow-x: hidden;
 		}
 
+		.element {
+			display: inline-block;
+			width: 400px;
+			height: 400px;
+		}
+
 		* {
 			-webkit-box-sizing: border-box;
 			-moz-box-sizing: border-box;
@@ -37,13 +43,49 @@
 <body>
 
 <div class="container">
-	<div id="element"></div>
+	<div id="element1" class="element"></div>
+	<div id="element2" class="element"></div>
+	<div id="element3" class="element"></div>
 </div>
 
 <script>
     let jchart;
     $(function () {
-        jchart = $("#element").jChart({
+        jchart1 = $("#element1").jChart({
+            data: [
+                {
+                    value: 300
+                },
+                {
+                    value: 100,
+                    color: {
+                        normal: '#77dd4f',
+                        active: '#b0ff9f',
+                    },
+                    draw: true, //false
+                    push: true, //false
+                },
+                {
+                    value: 100,
+                    color: {
+                        normal: '#dd5723',
+                        active: '#fa6025',
+                    },
+                    order: 1
+                }
+            ],
+            appearance: {
+                type: 'donut',
+                baseColor: 'transparent',
+                gap: 1,
+                baseStrokeWidth: 4,
+            },
+            callbacks: {
+                onSegmentMouseover: function(segment) {
+                }
+            }
+        });
+        jchart2 = $("#element2").jChart({
 			data: [
 				{
 				    value: 300
@@ -68,14 +110,40 @@
 			],
 			appearance: {
 			    type: 'donut',
-				baseColor: 'transparent',
-				//gap: 0
+				baseColor: '#000',
+				gap: 0.5,
+				baseStrokeWidth: 4,
 			},
 			callbacks: {
 			    onSegmentMouseover: function(segment) {
 
 				}
 			}
+        });
+        jchart3 = $("#element3").jChart({
+            data: [
+                {
+                    value: 199
+                },
+                {
+                    value: 363,
+                    color: {
+                        normal: '#77dd4f',
+                        active: '#b0ff9f',
+                    },
+                    draw: true, //false
+                    push: true, //false
+                },
+            ],
+            appearance: {
+                type: 'pie',
+                baseColor: '#ddd',
+            },
+            callbacks: {
+                onSegmentMouseover: function(did, segment) {
+                    console.log(did);
+                }
+            }
         });
     });
 </script>

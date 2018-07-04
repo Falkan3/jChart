@@ -1,5 +1,5 @@
 /*
- *  Plugin template - v0.0.1
+ *  jChart - v0.0.1
  *  A plugin template
  *
  *  Made by Adam Kocić (Falkan3)
@@ -43,7 +43,8 @@
                     draw: true, // whether to draw the segment on the chart or not; default true
                     push: true, // whether to push the next segment via offset. Best to set false together when draw is set to false (the empty section will always be at the end that way); default true
                     order: null, // drawing order
-                    name: ''
+                    name: '',
+                    strokeWidth: 3
                 }
             },
             appearance: {
@@ -54,6 +55,7 @@
                     active: '#00d8f2',
                 },
                 baseOffset: 0, // offset for starting point of first segment
+                baseStrokeWidth: 3,
                 gap: 1, // gap between segments for donut chart (in percentage, 1 = 1%)
             },
             callbacks: {
@@ -132,8 +134,8 @@
                 }
             }
 
-            console.log(data);
-            console.log(values.maxval);
+            //console.log(data);
+            //console.log(values.maxval);
 
             // calculate the single data values
             for (const segment in data) {
@@ -251,31 +253,38 @@
             /* ******* jQuery element in settings.data array approach ******* */
 
             const items = objThis.settings.data;
+
             for (const item in items) {
                 if (items.hasOwnProperty(item)) {
                     const segment = items[item]['element'];
                     segment.on('mouseover', function () {
                         const $this = $(this);
-                        segment.removeClass('active');
+                        // todo: remake the instance getting
+                        const instance = $this.closest('.' + pluginNameLower).parent().data('plugin_' + pluginName);
+                        const dId = $this.attr('d-id');
+                        $this.removeClass('active');
                         $this.addClass('active');
-                        switch(objThis.settings.appearance.type) {
+                        switch(instance.settings.appearance.type) {
                             case 'donut':
-                                $this.css('stroke', items[item]['color']['active']);
+                                $this.css('stroke', instance.settings.data[dId]['color']['active']);
                                 break;
                             case 'pie':
-                                $this.css('fill', items[item]['color']['active']);
+                                $this.css('fill', instance.settings.data[dId]['color']['active']);
                                 break;
                         }
 
                         // On Segment Mouseover callback
-                        if (objThis.settings.callbacks.onSegmentMouseover && $.isFunction(objThis.settings.callbacks.onSegmentMouseover)) {
-                            objThis.settings.callbacks.onSegmentMouseover.call(objThis, items[item]);
+                        if (instance.settings.callbacks.onSegmentMouseover && $.isFunction(instance.settings.callbacks.onSegmentMouseover)) {
+                            instance.settings.callbacks.onSegmentMouseover.call(instance, dId, instance.settings.data[dId]);
                         }
                     });
                     segment.on('mouseout', function () {
                         const $this = $(this);
+                        // todo: remake the instance getting
+                        const instance = $this.closest('.' + pluginNameLower).parent().data('plugin_' + pluginName);
+                        const dId = $this.attr('d-id');
                         $this.removeClass('active');
-                        switch(objThis.settings.appearance.type) {
+                        switch(instance.settings.appearance.type) {
                             case 'donut':
                                 $this.css('stroke', '');
                                 break;
@@ -285,8 +294,8 @@
                         }
 
                         // On Segment Mouseout callback
-                        if (objThis.settings.callbacks.onSegmentMouseout && $.isFunction(objThis.settings.callbacks.onSegmentMouseout)) {
-                            objThis.settings.callbacks.onSegmentMouseout.call(objThis, items[item]);
+                        if (instance.settings.callbacks.onSegmentMouseout && $.isFunction(instance.settings.callbacks.onSegmentMouseout)) {
+                            instance.settings.callbacks.onSegmentMouseout.call(instance, instance.settings.data[dId]);
                         }
                     });
                 }
@@ -328,7 +337,7 @@
                 class: objPrefix + 'donut--ring',
                 fill: 'transparent',
                 stroke: objThis.settings.appearance.baseColor,
-                'stroke-width': 3
+                'stroke-width': objThis.settings.appearance.baseStrokeWidth
             });
             const donutHole = null;
             // const donutHole = objThis.drawSvgCircle({
@@ -359,10 +368,11 @@
                         }
 
                         const donutSegment = objThis.drawSvgCircle({
+                            'd-id': segment,
                             class: objPrefix + 'donut--segment',
                             fill: 'transparent',
                             stroke: data[segment]['color']['normal'],
-                            'stroke-width': 3,
+                            'stroke-width': data[segment]['strokeWidth'],
                             'stroke-dasharray': (data[segment]['percentage'] - gap) + ' ' + (local_offset + gap),// '85 15',
                             'stroke-dashoffset': base_offset + offset
                         });
@@ -432,6 +442,7 @@
                         ].join(' ');
 
                         const donutSegment = objThis.drawSvgPath({
+                            'd-id': segment,
                             class: objPrefix + 'pie--segment',
                             fill: data[segment]['color']['normal'],
                             d: pathData
@@ -529,7 +540,7 @@
 
             if (message instanceof Array) {
                 for (let value of message) {
-                    console.log(message);
+                    console.log(value);
                 }
             } else {
                 console.log(message);

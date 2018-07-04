@@ -5,8 +5,8 @@
 		"../scss/style.scss"
 	],
 	"sourcesContent": [
-		"%graph-segment {\r\n\ttransition: stroke-dasharray 1s ease,\r\n\tstroke cubic-bezier(0.22, 0.61, 0.36, 1) 0.3s,\r\n\tfill cubic-bezier(0.22, 0.61, 0.36, 1) 0.3s;\r\n}\r\n\r\n.jchart {\r\n\twidth: 400px;\r\n\theight: 400px;\r\n\r\n\t&--body {\r\n\t\twidth: 100%;\r\n\t\theight: 100%;\r\n\t}\r\n\r\n\t&--donut {\r\n\t\t&--ring {\r\n\r\n\t\t}\r\n\r\n\t\t&--hole {\r\n\r\n\t\t}\r\n\r\n\t\t&--segment {\r\n\t\t\t@extend %graph-segment;\r\n\t\t}\r\n\t}\r\n\r\n\t&--pie {\r\n\t\t&--segment {\r\n\t\t\t@extend %graph-segment;\r\n\t\t}\r\n\t}\r\n}"
+		"%graph-segment {\r\n\ttransition: stroke-dasharray 1s ease,\r\n\tstroke cubic-bezier(0.22, 0.61, 0.36, 1) 0.3s,\r\n\tfill cubic-bezier(0.22, 0.61, 0.36, 1) 0.3s;\r\n}\r\n\r\n.jchart {\r\n\twidth: 100%;\r\n\theight: 100%;\r\n\r\n\t&--body {\r\n\t\twidth: 100%;\r\n\t\theight: 100%;\r\n\t}\r\n\r\n\t&--donut {\r\n\t\t&--ring {\r\n\r\n\t\t}\r\n\r\n\t\t&--hole {\r\n\r\n\t\t}\r\n\r\n\t\t&--segment {\r\n\t\t\t@extend %graph-segment;\r\n\t\t}\r\n\t}\r\n\r\n\t&--pie {\r\n\t\t&--segment {\r\n\t\t\t@extend %graph-segment;\r\n\t\t}\r\n\t}\r\n}"
 	],
-	"mappings": ";AAMA,AANA,uBAMO,EAAP,AANA,qBAMO,CANQ;EACd,UAAU,EAAE,gBAAgB,CAAC,EAAE,CAAC,IAAI,EACpC,MAAM,CAAC,iCAAY,CAAsB,IAAI,EAC7C,IAAI,CAAC,iCAAY,CAAsB,IAAI;CAC3C;;;AAED,AAAA,OAAO,CAAC;EACP,KAAK,EAAE,KAAM;EACb,MAAM,EAAE,KAAM;CA0Bd;;;AA5BD,AAAA,aAAO,CAIE;EACP,KAAK,EAAE,IAAK;EACZ,MAAM,EAAE,IAAK;CACb",
+	"mappings": ";AAMA,AANA,uBAMO,EAAP,AANA,qBAMO,CANQ;EACd,UAAU,EAAE,gBAAgB,CAAC,EAAE,CAAC,IAAI,EACpC,MAAM,CAAC,iCAAY,CAAsB,IAAI,EAC7C,IAAI,CAAC,iCAAY,CAAsB,IAAI;CAC3C;;;AAED,AAAA,OAAO,CAAC;EACP,KAAK,EAAE,IAAK;EACZ,MAAM,EAAE,IAAK;CA0Bb;;;AA5BD,AAAA,aAAO,CAIE;EACP,KAAK,EAAE,IAAK;EACZ,MAAM,EAAE,IAAK;CACb",
 	"names": []
 }
