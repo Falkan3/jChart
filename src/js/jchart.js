@@ -178,18 +178,29 @@
          * Draw chart container
          */
         drawContainer() {
-            const $html = $('<div>', {'class': pluginNameLower});
-            objThis.settings.elements.container = $html;
-            objThis.$element.append($html);
+            const $container = $('<div>', {'class': pluginNameLower});
+            const $figure = $('<figure>');
+
+            objThis.settings.elements.container = $container;
+            objThis.settings.elements.figure = $figure;
+
+            objThis.$element.append($container);
+
+            $container.append($figure);
         },
 
         /*
          * Draw chart body
          */
         drawBody() {
-            const $html = $('<div>', {'class': objPrefix + 'body'});
-            objThis.settings.elements.body = $html;
-            objThis.settings.elements.container.append($html);
+            const $chartBody = $('<div>', {'class': objPrefix + 'body'});
+            const $figureCaption = $('<figcaption>');
+
+            objThis.settings.elements.body = $chartBody;
+            objThis.settings.elements.figureCaption = $figureCaption;
+
+            objThis.settings.elements.figure.append($chartBody);
+            objThis.settings.elements.figure.append($figureCaption);
 
             objThis.drawBodyBase();
             objThis.addEventListeners();

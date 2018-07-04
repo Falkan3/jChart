@@ -1,8 +1,5 @@
-%graph-segment {
-	transition: stroke-dasharray 1s ease,
-	stroke cubic-bezier(0.22, 0.61, 0.36, 1) 0.3s,
-	fill cubic-bezier(0.22, 0.61, 0.36, 1) 0.3s;
-}
+@import 'mixins';
+@import 'templates';
 
 .jchart {
 	width: 100%;
@@ -31,5 +28,28 @@
 		&--segment {
 			@extend %graph-segment;
 		}
+	}
+
+	&--legend {
+		&-shape {
+			display: inline-block;
+			vertical-align: middle;
+			width: 2rem;
+			height: 2rem;
+			@include border-radius(50%);
+		}
+	}
+
+	/* --- */
+
+	.sr-only {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		padding: 0;
+		margin: -1px;
+		overflow: hidden;
+		clip: rect(0,0,0,0);
+		border: 0;
 	}
 }
