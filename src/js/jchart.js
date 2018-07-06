@@ -871,7 +871,7 @@
     // A really lightweight plugin wrapper around the constructor,
     // preventing against multiple instantiations
 
-    //default outside method call: pluginInstance._methods.nameOfAnInnerFunction(pluginInstance, arg1, arg2...);
+    // default outside method call: pluginInstance._methods.nameOfAnInnerFunction(pluginInstance, arg1, arg2...);
     $.fn[pluginName] = function (options) {
         let instances = [];
 
