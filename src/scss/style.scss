@@ -21,6 +21,17 @@
 
 		&--segment {
 			@extend %graph-segment;
+
+			&-circle {
+
+			}
+			&-path {
+
+			}
+
+			&.active {
+
+			}
 		}
 	}
 

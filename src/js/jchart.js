@@ -29,6 +29,9 @@
             elements: {
                 container: null,
                 body: null,
+                group: null,
+                figure: null,
+                svg: null,
                 segments: []
             },
             data: [],
@@ -55,13 +58,26 @@
                     active: '#00d8f2',
                 },
                 baseOffset: 0, // offset for starting point of first segment
-                baseStrokeWidth: 3,
+                baseStrokeWidth: 1,
+                strokeWidth: 3, // default stroke width for all segments
+
+                /* DONUT AND CIRCLE */
+                radius: 100 / (2 * Math.PI),
+                innerCutout: 0.75, // how "thin" the segments are from the center point. (0 will render a pie chart (full circle))
+                centerX: 21,
+                centerY: 21,
+
+                /* DONUT */
+                subType: 'circle', // render type: circle for circle based approach, path for line and arc approach using path
                 gap: 1, // gap between segments for donut chart (in percentage, 1 = 1%)
             },
             callbacks: {
-                onInit() {},
-                onSegmentMouseover() {},
-                onSegmentMouseout() {}
+                onInit() {
+                },
+                onSegmentMouseover() {
+                },
+                onSegmentMouseout() {
+                }
             }
         };
     let objThis = null;
@@ -83,26 +99,27 @@
         //dynamic vars
         //this.html = $('html');
 
-        this.init();
+        methods.init();
     }
 
     // Avoid Plugin.prototype conflicts
-    $.extend(Plugin.prototype, {
+    // $.extend(Plugin.prototype, {
+    const methods = {
         //if(jQuery.fn.pluginName) {...} - check for functions from other plugins (dependencies)
 
         init() {
 
             // Place initialization logic here
             // You already have access to the DOM element and
-            // the options via the instance, e.g. this.element
-            // and this.settings
+            // the options via the instance, e.g. objThis.element
+            // and objThis.settings
             // you can add more functions like the one below and
             // call them like the example bellow
-            this.initElement();
+            methods.initElement();
 
             // On Init callback
-            if (this.settings.callbacks.onInit && $.isFunction(this.settings.callbacks.onInit)) {
-                this.settings.callbacks.onInit.call(this);
+            if (objThis.settings.callbacks.onInit && $.isFunction(objThis.settings.callbacks.onInit)) {
+                objThis.settings.callbacks.onInit.call(this);
             }
         },
 
@@ -111,16 +128,18 @@
          */
         initElement() {
             // calculate the values
-            objThis.calculateDataValues();
+            methods.calculateDataValues();
 
             // draw html
-            objThis.initHtml();
+            methods.initHtml();
         },
 
         /*
          * Calculate the necessary values for graphing (maxval, percentage value of each segment)
          */
         calculateDataValues() {
+            console.log(objThis);
+
             const values = {
                 maxval: 0,
             };
@@ -151,15 +170,16 @@
             }
 
             // sort data by their order parameter
-            function compare(a,b) {
-                if(a['order'] === null) return 1;
-                if(b['order'] === null) return -1;
+            function compare(a, b) {
+                if (a['order'] === null) return 1;
+                if (b['order'] === null) return -1;
                 if (a['order'] < b['order'])
                     return -1;
                 if (a['order'] > b['order'])
                     return 1;
                 return 0;
             }
+
             data.sort(compare);
 
             //objThis.settings.data = data;
@@ -170,14 +190,23 @@
          * Initialize HTML drawing function
          */
         initHtml() {
-            objThis.drawContainer();
-            objThis.drawBody();
+            methods.drawContainer();
+            methods.drawBody();
         },
 
         /*
          * Draw chart container
          */
         drawContainer() {
+            /* ---- cleanup ---- */
+            if (typeof objThis.settings.elements.container !== 'undefined' && objThis.settings.elements.container !== null) {
+                objThis.settings.elements.container.remove();
+            }
+            if (typeof objThis.settings.elements.figure !== 'undefined' && objThis.settings.elements.figure !== null) {
+                objThis.settings.elements.figure.remove();
+            }
+            /* ---- cleanup ---- */
+
             const $container = $('<div>', {'class': pluginNameLower});
             const $figure = $('<figure>');
 
@@ -193,6 +222,15 @@
          * Draw chart body
          */
         drawBody() {
+            /* ---- cleanup ---- */
+            if (typeof objThis.settings.elements.body !== 'undefined' && objThis.settings.elements.body !== null) {
+                objThis.settings.elements.body.remove();
+            }
+            if (typeof objThis.settings.elements.figureCaption !== 'undefined' && objThis.settings.elements.figureCaption !== null) {
+                objThis.settings.elements.figureCaption.remove();
+            }
+            /* ---- cleanup ---- */
+
             const $chartBody = $('<div>', {'class': objPrefix + 'body'});
             const $figureCaption = $('<figcaption>');
 
@@ -202,11 +240,20 @@
             objThis.settings.elements.figure.append($chartBody);
             objThis.settings.elements.figure.append($figureCaption);
 
-            objThis.drawBodyBase();
-            objThis.addEventListeners();
+            methods.drawBodyBase();
+            methods.addEventListeners();
         },
 
         drawBodyBase() {
+            /* ---- cleanup ---- */
+            if (typeof objThis.settings.elements.svg !== 'undefined' && objThis.settings.elements.svg !== null) {
+                objThis.settings.elements.svg.remove();
+            }
+            if (typeof objThis.settings.elements.group !== 'undefined' && objThis.settings.elements.group !== null) {
+                objThis.settings.elements.group.remove();
+            }
+            /* ---- cleanup ---- */
+
             // render data into the graph
             const data = objThis.settings.data;
             const values = objThis.settings.values;
@@ -216,21 +263,36 @@
             let segments = [];
 
             switch (objThis.settings.appearance.type) {
+                /* donut chart */
                 case 'donut':
-                    graphData = objThis.drawBodyBaseDonut();
+                    graphData = methods.drawBodyBaseDonut({
+                        'type': objThis.settings.appearance.subType
+                    });
 
                     svg = graphData['svg'];
-                    segments = objThis.drawBodySegmentDonut(data, values);
+                    segments = methods.drawBodySegmentDonut(data, values, {
+                        'type': objThis.settings.appearance.subType
+                    });
 
                     svgElement = objThis.settings.elements.body[0].appendChild(svg);
                     svgElement.appendChild(graphData['ring']);
-                    //svgElement.appendChild(graphData['hole']);
+
+                    switch (objThis.settings.appearance.type) {
+                        /* donut chart - circle */
+                        case 'circle':
+                            break;
+                        /* donut chart - path */
+                        case 'path':
+                            svgElement.appendChild(graphData['ring']);
+                            break;
+                    }
                     break;
+                /* pie chart */
                 case 'pie':
-                    graphData = objThis.drawBodyBasePie();
+                    graphData = methods.drawBodyBasePie();
 
                     svg = graphData['svg'];
-                    segments = objThis.drawBodySegmentPie(data, values);
+                    segments = methods.drawBodySegmentPie(data, values);
 
                     svgElement = objThis.settings.elements.body[0].appendChild(svg);
                     break;
@@ -249,15 +311,20 @@
 
             /* ******* jQuery element in settings.data array approach ******* */
 
+            const group = svgElement.appendChild(methods.drawGroup());
+
             for (const item in data) {
                 if (data.hasOwnProperty(item)) {
                     const segment = data[item]['element'];
-                    const segmentElement = svgElement.appendChild(segment);
+                    const segmentElement = group.appendChild(segment); //svgElement.appendChild(segment);
                     const $segmentElement = $(segmentElement);
                     data[item]['element'] = $segmentElement;
                     objThis.settings.elements.segments.push($segmentElement);
                 }
             }
+
+            objThis.settings.elements.svg = svgElement;
+            objThis.settings.elements.group = $(group);
         },
 
         addEventListeners() {
@@ -275,10 +342,21 @@
                         const dId = $this.attr('d-id');
                         $this.removeClass('active');
                         $this.addClass('active');
-                        switch(instance.settings.appearance.type) {
+                        switch (instance.settings.appearance.type) {
+                            /* donut chart */
                             case 'donut':
-                                $this.css('stroke', instance.settings.data[dId]['color']['active']);
+                                switch (instance.settings.appearance.subType) {
+                                    /* donut chart - circle */
+                                    case 'circle':
+                                        $this.css('stroke', instance.settings.data[dId]['color']['active']);
+                                        break;
+                                    /* donut chart - path */
+                                    case 'path':
+                                        $this.css('fill', instance.settings.data[dId]['color']['active']);
+                                        break;
+                                }
                                 break;
+                            /* pie chart */
                             case 'pie':
                                 $this.css('fill', instance.settings.data[dId]['color']['active']);
                                 break;
@@ -295,10 +373,21 @@
                         const instance = $this.closest('.' + pluginNameLower).parent().data('plugin_' + pluginName);
                         const dId = $this.attr('d-id');
                         $this.removeClass('active');
-                        switch(instance.settings.appearance.type) {
+                        switch (instance.settings.appearance.type) {
+                            /* donut chart */
                             case 'donut':
-                                $this.css('stroke', '');
+                                switch (instance.settings.appearance.subType) {
+                                    /* donut chart - circle */
+                                    case 'circle':
+                                        $this.css('stroke', '');
+                                        break;
+                                    /* donut chart - path */
+                                    case 'path':
+                                        $this.css('fill', '');
+                                        break;
+                                }
                                 break;
+                            /* pie chart */
                             case 'pie':
                                 $this.css('fill', '');
                                 break;
@@ -336,67 +425,198 @@
 
         /* DONUT */
 
-        drawBodyBaseDonut() {
+        drawBodyBaseDonut(options) {
+            const defaults = {
+                type: 'circle', // ['path', 'circle']
+            };
+            const settings = $.extend(true, {}, defaults, options);
+
+            let response = {};
+
             const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
             svg.setAttribute('class', objPrefix + 'donut');
             svg.setAttribute('width', '100%');
             svg.setAttribute('height', '100%');
-            svg.setAttribute('viewBox', '0 0 42 42'); // double cx and cy
+            svg.setAttribute('viewBox', `0 0 ${objThis.settings.appearance.centerX * 2} ${objThis.settings.appearance.centerY * 2}`); // double cx and cy
             svg.setAttributeNS("http://www.w3.org/2000/xmlns/", "xmlns:xlink", "http://www.w3.org/1999/xlink");
 
-            const donutRing = objThis.drawSvgCircle({
-                class: objPrefix + 'donut--ring',
-                fill: 'transparent',
-                stroke: objThis.settings.appearance.baseColor,
-                'stroke-width': objThis.settings.appearance.baseStrokeWidth
-            });
-            const donutHole = null;
-            // const donutHole = objThis.drawSvgCircle({
-            //     class: objPrefix + 'donut--hole'
-            // });
+            /* common vars */
+            let donutRing;
 
-            return {'svg': svg, 'ring': donutRing, 'hole': donutHole};
+            switch (settings.type) {
+                case 'circle':
+                    /* -------- Method 1 - Circle -------- */
+
+                    donutRing = methods.drawSvgCircle({
+                        class: objPrefix + 'donut--ring' + objPrefix + 'donut--ring-circle',
+                        fill: 'transparent',
+                        stroke: objThis.settings.appearance.baseColor,
+                        'stroke-width': objThis.settings.appearance.baseStrokeWidth
+                    });
+                    const donutHole = null;
+                    // const donutHole = objThis.drawSvgCircle({
+                    //     class: objPrefix + 'donut--hole'
+                    // });
+
+                    response = {'svg': svg, 'ring': donutRing, 'hole': donutHole};
+                    break;
+                case 'path':
+                    /* -------- Method 2 - Path - Arc and Line -------- */
+
+                    const baseDoughnutRadius = objThis.settings.appearance.radius + objThis.settings.appearance.baseStrokeWidth; // + objThis.settings.appearance.baseOffset;
+                    const cutoutRadius = objThis.settings.appearance.radius * (objThis.settings.appearance.innerCutout);
+                    const baseCutoutRadius = cutoutRadius - objThis.settings.appearance.baseStrokeWidth; // - objThis.settings.appearance.baseOffset;
+
+                    //Calculate values for the path.
+                    //We needn't calculate startRadius, segmentAngle and endRadius, because base doughnut doesn't animate.
+                    const startRadius = -Math.PI / 2, // -1.570
+                        segmentAngle = (99.9999 / 100) * (Math.PI * 2), // 6.2831, // 1 * ((99.9999/100) * (PI*2)),
+                        endRadius = startRadius + segmentAngle, // 4.7131
+                        startX = objThis.settings.appearance.centerX + Math.cos(startRadius) * baseDoughnutRadius,
+                        startY = objThis.settings.appearance.centerY + Math.sin(startRadius) * baseDoughnutRadius,
+                        endX2 = objThis.settings.appearance.centerX + Math.cos(startRadius) * baseCutoutRadius,
+                        endY2 = objThis.settings.appearance.centerY + Math.sin(startRadius) * baseCutoutRadius,
+                        endX = objThis.settings.appearance.centerX + Math.cos(endRadius) * baseDoughnutRadius,
+                        endY = objThis.settings.appearance.centerY + Math.sin(endRadius) * baseDoughnutRadius,
+                        startX2 = objThis.settings.appearance.centerX + Math.cos(endRadius) * baseCutoutRadius,
+                        startY2 = objThis.settings.appearance.centerY + Math.sin(endRadius) * baseCutoutRadius;
+                    const cmd = [
+                        'M', startX, startY,
+                        'A', baseDoughnutRadius, baseDoughnutRadius, 0, 1, 1, endX, endY,
+                        'L', startX2, startY2,
+                        'A', baseCutoutRadius, baseCutoutRadius, 0, 1, 0, endX2, endY2, // reverse
+                        'Z'
+                    ];
+
+                    donutRing = methods.drawSvgPath({
+                        class: objPrefix + 'donut--ring' + objPrefix + 'donut--ring-path',
+                        fill: objThis.settings.appearance.baseColor,
+                        d: cmd.join(' '),
+                    });
+
+                    response = {'svg': svg, 'ring': donutRing};
+                    break;
+            }
+
+            return response;
         },
 
-        drawBodySegmentDonut(data, values) {
-            let segments = [];
+        drawBodySegmentDonut(data, values, options) {
+            const defaults = {
+                type: 'circle', // ['path', 'circle']
+            };
+            const settings = $.extend(true, {}, defaults, options);
 
-            const base_offset = 25; // base offset set to 25 to make the chart start from the top
-            let offset = 0; //offset for dashoffset parameter, increased after every segment is drawn and supplied to dashoffset parameter for the next segment
+            let segments = [];
+            /* common vars */
             const gap = objThis.settings.appearance.gap; // gap between segments
 
-            for (const segment in data) {
-                if (data.hasOwnProperty(segment)) {
-                    const local_offset = (100 - data[segment]['percentage']);
+            switch (settings.type) {
+                case 'circle':
+                    /* -------- Method 1 - Circle -------- */
 
-                    if (data[segment]['draw'] === true) {
-                        // if color is empty, supply the default color from appearance settings
-                        if (typeof data[segment]['color']['normal'] === 'undefined') {
-                            data[segment]['color']['normal'] = objThis.settings.appearance.segmentColor.normal;
+                    const base_offset = 25; // base offset set to 25 to make the chart start from the top
+                    let offset = 0; //offset for dashoffset parameter, increased after every segment is drawn and supplied to dashoffset parameter for the next segment
+                    // const gap = objThis.settings.appearance.gap; // gap between segments
+
+                    for (const segment in data) {
+                        if (data.hasOwnProperty(segment)) {
+                            const local_offset = (100 - data[segment]['percentage']);
+
+                            if (data[segment]['draw'] === true) {
+                                // if color is empty, supply the default color from appearance settings
+                                if (typeof data[segment]['color']['normal'] === 'undefined') {
+                                    data[segment]['color']['normal'] = objThis.settings.appearance.segmentColor.normal;
+                                }
+                                if (typeof data[segment]['color']['active'] === 'undefined') {
+                                    data[segment]['color']['active'] = objThis.settings.appearance.segmentColor.active;
+                                }
+
+                                const donutSegment = methods.drawSvgCircle({
+                                    'd-id': segment,
+                                    class: objPrefix + 'donut--segment' + ' ' + objPrefix + 'donut--segment-circle',
+                                    fill: 'transparent',
+                                    stroke: data[segment]['color']['normal'],
+                                    'stroke-width': data[segment]['strokeWidth'],
+                                    'stroke-dasharray': (data[segment]['percentage'] - gap) + ' ' + (local_offset + gap),// '85 15',
+                                    'stroke-dashoffset': base_offset + offset
+                                });
+
+                                /* ******* jQuery element in settings.data array approach ******* */
+                                data[segment]['element'] = donutSegment;
+                                segments.push(donutSegment);
+                            }
+
+                            if (data[segment]['push'] === true) {
+                                offset += local_offset;
+                            }
                         }
-                        if (typeof data[segment]['color']['active'] === 'undefined') {
-                            data[segment]['color']['active'] = objThis.settings.appearance.segmentColor.active;
+                    }
+                    break;
+                case 'path':
+                    /* -------- Method 2 - Path - Arc and Line -------- */
+
+                    let startRadius = -Math.PI / 2; // -90 degree
+                    const doughnutRadius = objThis.settings.appearance.radius;
+                    const cutoutRadius = doughnutRadius * (objThis.settings.appearance.innerCutout);
+                    const centerX = objThis.settings.appearance.centerX;
+                    const centerY = objThis.settings.appearance.centerY;
+                    // const gap = objThis.settings.appearance.gap; // gap between segments
+
+                    // draw each path
+                    for (const segment in data) {
+                        if (data.hasOwnProperty(segment)) {
+                            const gapPercent = (gap / 100),
+                                gapAngle = gapPercent * (Math.PI * 2),
+                                segmentAngle = ((data[segment]['percentage_raw'] - gapPercent) * (Math.PI * 2)),
+                                endRadius = startRadius + segmentAngle,
+                                largeArc = ((endRadius - startRadius) % (Math.PI * 2)) > Math.PI ? 1 : 0,
+                                startX = centerX + Math.cos(startRadius) * doughnutRadius,
+                                startY = centerY + Math.sin(startRadius) * doughnutRadius,
+                                endX2 = centerX + Math.cos(startRadius) * cutoutRadius,
+                                endY2 = centerY + Math.sin(startRadius) * cutoutRadius,
+                                endX = centerX + Math.cos(endRadius) * doughnutRadius,
+                                endY = centerY + Math.sin(endRadius) * doughnutRadius,
+                                startX2 = centerX + Math.cos(endRadius) * cutoutRadius,
+                                startY2 = centerY + Math.sin(endRadius) * cutoutRadius;
+
+                            if (data[segment]['draw'] === true) {
+                                // if color is empty, supply the default color from appearance settings
+                                if (typeof data[segment]['color']['normal'] === 'undefined') {
+                                    data[segment]['color']['normal'] = objThis.settings.appearance.segmentColor.normal;
+                                }
+                                if (typeof data[segment]['color']['active'] === 'undefined') {
+                                    data[segment]['color']['active'] = objThis.settings.appearance.segmentColor.active;
+                                }
+
+                                const cmd = [
+                                    'M', startX, startY, // Move pointer
+                                    'A', doughnutRadius, doughnutRadius, 0, largeArc, 1, endX, endY, // Draw outer arc path
+                                    'L', startX2, startY2, // Draw line path (this line connects outer and innner arc paths)
+                                    'A', cutoutRadius, cutoutRadius, 0, largeArc, 0, endX2, endY2, // Draw inner arc path
+                                    'Z' // Close path
+                                ];
+
+                                const donutSegment = methods.drawSvgPath({
+                                    'd-id': segment,
+                                    class: objPrefix + 'donut--segment' + ' ' + objPrefix + 'donut--segment-path',
+                                    fill: data[segment]['color']['normal'],
+                                    stroke: 'transparent',
+                                    'stroke-width': data[segment]['strokeWidth'],
+                                    d: cmd.join(' ')
+                                });
+
+                                /* ******* jQuery element in settings.data array approach ******* */
+                                data[segment]['element'] = donutSegment;
+                                segments.push(donutSegment);
+                            }
+
+                            if (data[segment]['push'] === true) {
+                                startRadius += segmentAngle + gapAngle;
+                            }
                         }
-
-                        const donutSegment = objThis.drawSvgCircle({
-                            'd-id': segment,
-                            class: objPrefix + 'donut--segment',
-                            fill: 'transparent',
-                            stroke: data[segment]['color']['normal'],
-                            'stroke-width': data[segment]['strokeWidth'],
-                            'stroke-dasharray': (data[segment]['percentage'] - gap) + ' ' + (local_offset + gap),// '85 15',
-                            'stroke-dashoffset': base_offset + offset
-                        });
-
-                        /* ******* jQuery element in settings.data array approach ******* */
-                        data[segment]['element'] = donutSegment;
-                        segments.push(donutSegment);
                     }
-
-                    if (data[segment]['push'] === true) {
-                        offset += local_offset;
-                    }
-                }
+                    break;
             }
 
             return segments;
@@ -433,11 +653,11 @@
                             data[segment]['color']['active'] = objThis.settings.appearance.segmentColor.active;
                         }
 
-                        const startCoordinates = objThis.getCoordinatesForPercent(base_offset + offset);
+                        const startCoordinates = methods.getCoordinatesForPercent(base_offset + offset);
 
                         offset += data[segment]['percentage_raw'];
 
-                        const endCoordinates = objThis.getCoordinatesForPercent(offset);
+                        const endCoordinates = methods.getCoordinatesForPercent(offset);
 
                         const startX = startCoordinates['x'];
                         const startY = startCoordinates['y'];
@@ -452,7 +672,7 @@
                             `L 0 0`,
                         ].join(' ');
 
-                        const donutSegment = objThis.drawSvgPath({
+                        const donutSegment = methods.drawSvgPath({
                             'd-id': segment,
                             class: objPrefix + 'pie--segment',
                             fill: data[segment]['color']['normal'],
@@ -475,15 +695,32 @@
 
         /* --- SVG helpers--- */
 
+        drawGroup(options) {
+            const defaults = {
+                'class': '',
+            };
+            const settings = $.extend(true, {}, defaults, options);
+
+            const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+
+            for (const attribute in settings) {
+                if (settings.hasOwnProperty(attribute) && settings[attribute] !== '' && settings[attribute] !== 0) {
+                    group.setAttributeNS(null, attribute, settings[attribute]);
+                }
+            }
+
+            return group;
+        },
+
         drawSvgCircle(options) {
             const defaults = {
                 'class': '',
-                'cx': 21, // half of viewbox
-                'cy': 21, // half of viewbox
-                'r': 100 / (2 * Math.PI),// 15.91549430918954
+                'cx': objThis.settings.appearance.centerX, // half of viewbox
+                'cy': objThis.settings.appearance.centerY, // half of viewbox
+                'r': objThis.settings.appearance.radius,// 15.91549430918954
                 'fill': '#fff',
                 'stroke': '', // #000
-                'stroke-width': 0,
+                'stroke-width': objThis.settings.appearance.strokeWidth,
                 'stroke-dasharray': '',
                 'stroke-dashoffset': '25', // Circumference − All preceding segments’ total length + First segment’s offset = Current segment offset
             };
@@ -492,7 +729,7 @@
             const nCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
 
             for (const attribute in settings) {
-                if (settings.hasOwnProperty(attribute) && attribute !== '' && attribute !== 0) {
+                if (settings.hasOwnProperty(attribute) && settings[attribute] !== '' && settings[attribute] !== 0) {
                     nCircle.setAttributeNS(null, attribute, settings[attribute]);
                 }
             }
@@ -515,7 +752,7 @@
             const nPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
 
             for (const attribute in settings) {
-                if (settings.hasOwnProperty(attribute) && attribute !== '' && attribute !== 0) {
+                if (settings.hasOwnProperty(attribute) && settings[attribute] !== '' && settings[attribute] !== 0) {
                     nPath.setAttributeNS(null, attribute, settings[attribute]);
                 }
             }
@@ -545,6 +782,10 @@
         /* --- /SVG helpers--- */
 
         /* ------------------------------ HELPERS ------------------------------- */
+
+        GetInstance() {
+            methods.Log(objThis);
+        },
 
         Log(message) {
             console.log('*** ' + pluginName + ' ***');
@@ -609,34 +850,52 @@
 
             return output;
         },
-    });
+    };
 
     // A really lightweight plugin wrapper around the constructor,
     // preventing against multiple instantiations
+
+    //default outside method call: $('#container').data('plugin_defaultPluginName').yourOtherFunction();
     $.fn[pluginName] = function (options) {
-        let instances = [];
+        // let instances = [];
+        //
+        // this.each(function () {
+        //     if (!$.data(this, "plugin_" + pluginName)) {
+        //         const instance = new Plugin(this, options);
+        //         $.data(this, "plugin_" +
+        //             pluginName, instance);
+        //         instances.push(instance);
+        //     }
+        // });
+        //
+        // if (instances.length === 1) {
+        //     return instances[0];
+        // }
+        //
+        // return null
 
-        this.each(function () {
-            if (!$.data(this, "plugin_" + pluginName)) {
-                const instance = new Plugin(this, options);
-                $.data(this, "plugin_" +
-                    pluginName, instance);
-                instances.push(instance);
+        if (methods[options]) {
+            return methods[options].apply(this, Array.prototype.slice.call(arguments, 1));
+        } else if (typeof options === "object" || !options) {
+            let instances = [];
+
+            this.each(function () {
+                if (!$.data(this, "plugin_" + pluginName)) {
+                    const instance = new Plugin(this, options);
+                    $.data(this, "plugin_" +
+                        pluginName, instance);
+                    instances.push(instance);
+                }
+            });
+
+            if (instances.length === 1) {
+                return instances[0];
             }
 
-            // Make it possible to access methods from public.
-            // e.g `$element.plugin('method');`
-            if (typeof options === 'string') {
-                const args = Array.prototype.slice.call(arguments, 1);
-                data[options].apply(data, args);
-            }
-        });
-
-        if (instances.length === 1) {
-            return instances[0];
+            return null
+        } else {
+            $.error("Method " + options + " does not exist");
         }
-
-        return null
     };
 
 })(jQuery, window, document);

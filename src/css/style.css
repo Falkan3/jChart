@@ -16,7 +16,7 @@
   height: 100%;
 }
 
-/* line 34, C:/Users/Adam/Documents/Repos/Plugins/jChart/src/scss/style.scss */
+/* line 45, C:/Users/Adam/Documents/Repos/Plugins/jChart/src/scss/style.scss */
 .jchart--legend-shape {
   display: inline-block;
   vertical-align: middle;
@@ -27,7 +27,7 @@
   border-radius: 50%;
 }
 
-/* line 45, C:/Users/Adam/Documents/Repos/Plugins/jChart/src/scss/style.scss */
+/* line 56, C:/Users/Adam/Documents/Repos/Plugins/jChart/src/scss/style.scss */
 .jchart .sr-only {
   position: absolute;
   width: 1px;
