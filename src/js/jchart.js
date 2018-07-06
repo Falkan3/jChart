@@ -72,15 +72,12 @@
                 gap: 1, // gap between segments for donut chart (in percentage, 1 = 1%)
             },
             callbacks: {
-                onInit() {
-                },
-                onSegmentMouseover() {
-                },
-                onSegmentMouseout() {
-                }
+                onInit() {},
+                onRefresh() {},
+                onSegmentMouseover() {},
+                onSegmentMouseout() {}
             }
         };
-    let objThis = null;
 
     // The actual plugin constructor
     function Plugin(element, options) {
@@ -94,12 +91,14 @@
         this.settings = $.extend(true, {}, defaults, options);
         this._defaults = defaults;
         this._name = pluginName;
-        objThis = this;
+        this._nameLower = pluginNameLower;
+        this._objPrefix = objPrefix;
+        this._methods = methods;
 
         //dynamic vars
         //this.html = $('html');
 
-        methods.init();
+        this._methods.init(this);
     }
 
     // Avoid Plugin.prototype conflicts
@@ -107,48 +106,45 @@
     const methods = {
         //if(jQuery.fn.pluginName) {...} - check for functions from other plugins (dependencies)
 
-        init() {
-
+        init(instance) {
             // Place initialization logic here
             // You already have access to the DOM element and
-            // the options via the instance, e.g. objThis.element
-            // and objThis.settings
+            // the options via the instance, e.g. instance.element
+            // and instance.settings
             // you can add more functions like the one below and
             // call them like the example bellow
-            methods.initElement();
+            instance._methods.initElement(instance);
 
             // On Init callback
-            if (objThis.settings.callbacks.onInit && $.isFunction(objThis.settings.callbacks.onInit)) {
-                objThis.settings.callbacks.onInit.call(this);
+            if (instance.settings.callbacks.onInit && $.isFunction(instance.settings.callbacks.onInit)) {
+                instance.settings.callbacks.onInit.call(instance);
             }
         },
 
         /*
          * Main function for initializing
          */
-        initElement() {
+        initElement(instance) {
             // calculate the values
-            methods.calculateDataValues();
+            instance._methods.calculateDataValues(instance);
 
             // draw html
-            methods.initHtml();
+            instance._methods.initHtml(instance);
         },
 
         /*
          * Calculate the necessary values for graphing (maxval, percentage value of each segment)
          */
-        calculateDataValues() {
-            console.log(objThis);
-
+        calculateDataValues(instance) {
             const values = {
                 maxval: 0,
             };
-            const data = objThis.settings.data;
+            const data = instance.settings.data;
 
             // calculate the sum data values
             for (const segment in data) {
                 if (data.hasOwnProperty(segment)) {
-                    data[segment] = $.extend(true, {}, objThis.settings.placeholder.data, data[segment]);
+                    data[segment] = $.extend(true, {}, instance.settings.placeholder.data, data[segment]);
                     values.maxval += data[segment].value;
                 }
             }
@@ -166,6 +162,9 @@
                         data[segment].percentage_raw = data[segment].value / values.maxval;
                         data[segment].percentage = (data[segment].value / values.maxval) * 100;
                     }
+                    if (data[segment].order === null) {
+                        data[segment].order = data.length;
+                    }
                 }
             }
 
@@ -182,38 +181,38 @@
 
             data.sort(compare);
 
-            //objThis.settings.data = data;
-            objThis.settings.values = values;
+            //instance.settings.data = data;
+            instance.settings.values = values;
         },
 
         /*
          * Initialize HTML drawing function
          */
-        initHtml() {
-            methods.drawContainer();
-            methods.drawBody();
+        initHtml(instance) {
+            instance._methods.drawContainer(instance);
+            instance._methods.drawBody(instance);
         },
 
         /*
          * Draw chart container
          */
-        drawContainer() {
+        drawContainer(instance) {
             /* ---- cleanup ---- */
-            if (typeof objThis.settings.elements.container !== 'undefined' && objThis.settings.elements.container !== null) {
-                objThis.settings.elements.container.remove();
+            if (typeof instance.settings.elements.container !== 'undefined' && instance.settings.elements.container !== null) {
+                instance.settings.elements.container.remove();
             }
-            if (typeof objThis.settings.elements.figure !== 'undefined' && objThis.settings.elements.figure !== null) {
-                objThis.settings.elements.figure.remove();
+            if (typeof instance.settings.elements.figure !== 'undefined' && instance.settings.elements.figure !== null) {
+                instance.settings.elements.figure.remove();
             }
             /* ---- cleanup ---- */
 
             const $container = $('<div>', {'class': pluginNameLower});
             const $figure = $('<figure>');
 
-            objThis.settings.elements.container = $container;
-            objThis.settings.elements.figure = $figure;
+            instance.settings.elements.container = $container;
+            instance.settings.elements.figure = $figure;
 
-            objThis.$element.append($container);
+            instance.$element.append($container);
 
             $container.append($figure);
         },
@@ -221,63 +220,63 @@
         /*
          * Draw chart body
          */
-        drawBody() {
+        drawBody(instance) {
             /* ---- cleanup ---- */
-            if (typeof objThis.settings.elements.body !== 'undefined' && objThis.settings.elements.body !== null) {
-                objThis.settings.elements.body.remove();
+            if (typeof instance.settings.elements.body !== 'undefined' && instance.settings.elements.body !== null) {
+                instance.settings.elements.body.remove();
             }
-            if (typeof objThis.settings.elements.figureCaption !== 'undefined' && objThis.settings.elements.figureCaption !== null) {
-                objThis.settings.elements.figureCaption.remove();
+            if (typeof instance.settings.elements.figureCaption !== 'undefined' && instance.settings.elements.figureCaption !== null) {
+                instance.settings.elements.figureCaption.remove();
             }
             /* ---- cleanup ---- */
 
-            const $chartBody = $('<div>', {'class': objPrefix + 'body'});
+            const $chartBody = $('<div>', {'class': instance._objPrefix + 'body'});
             const $figureCaption = $('<figcaption>');
 
-            objThis.settings.elements.body = $chartBody;
-            objThis.settings.elements.figureCaption = $figureCaption;
+            instance.settings.elements.body = $chartBody;
+            instance.settings.elements.figureCaption = $figureCaption;
 
-            objThis.settings.elements.figure.append($chartBody);
-            objThis.settings.elements.figure.append($figureCaption);
+            instance.settings.elements.figure.append($chartBody);
+            instance.settings.elements.figure.append($figureCaption);
 
-            methods.drawBodyBase();
-            methods.addEventListeners();
+            instance._methods.drawBodyBase(instance);
+            instance._methods.addEventListeners(instance);
         },
 
-        drawBodyBase() {
+        drawBodyBase(instance) {
             /* ---- cleanup ---- */
-            if (typeof objThis.settings.elements.svg !== 'undefined' && objThis.settings.elements.svg !== null) {
-                objThis.settings.elements.svg.remove();
+            if (typeof instance.settings.elements.svg !== 'undefined' && instance.settings.elements.svg !== null) {
+                instance.settings.elements.svg.remove();
             }
-            if (typeof objThis.settings.elements.group !== 'undefined' && objThis.settings.elements.group !== null) {
-                objThis.settings.elements.group.remove();
+            if (typeof instance.settings.elements.group !== 'undefined' && instance.settings.elements.group !== null) {
+                instance.settings.elements.group.remove();
             }
             /* ---- cleanup ---- */
 
             // render data into the graph
-            const data = objThis.settings.data;
-            const values = objThis.settings.values;
+            const data = instance.settings.data;
+            const values = instance.settings.values;
             let graphData = null;
             let svg = null;
             let svgElement = null;
             let segments = [];
 
-            switch (objThis.settings.appearance.type) {
+            switch (instance.settings.appearance.type) {
                 /* donut chart */
                 case 'donut':
-                    graphData = methods.drawBodyBaseDonut({
-                        'type': objThis.settings.appearance.subType
+                    graphData = instance._methods.drawBodyBaseDonut(instance, {
+                        'type': instance.settings.appearance.subType
                     });
 
                     svg = graphData['svg'];
-                    segments = methods.drawBodySegmentDonut(data, values, {
-                        'type': objThis.settings.appearance.subType
+                    segments = instance._methods.drawBodySegmentDonut(instance, data, values, {
+                        'type': instance.settings.appearance.subType
                     });
 
-                    svgElement = objThis.settings.elements.body[0].appendChild(svg);
+                    svgElement = instance.settings.elements.body[0].appendChild(svg);
                     svgElement.appendChild(graphData['ring']);
 
-                    switch (objThis.settings.appearance.type) {
+                    switch (instance.settings.appearance.type) {
                         /* donut chart - circle */
                         case 'circle':
                             break;
@@ -289,12 +288,12 @@
                     break;
                 /* pie chart */
                 case 'pie':
-                    graphData = methods.drawBodyBasePie();
+                    graphData = instance._methods.drawBodyBasePie(instance);
 
                     svg = graphData['svg'];
-                    segments = methods.drawBodySegmentPie(data, values);
+                    segments = instance._methods.drawBodySegmentPie(instance, data, values);
 
-                    svgElement = objThis.settings.elements.body[0].appendChild(svg);
+                    svgElement = instance.settings.elements.body[0].appendChild(svg);
                     break;
                 default:
                     break;
@@ -305,13 +304,13 @@
             // for (const segment in segments) {
             //     if (segments.hasOwnProperty(segment)) {
             //         const segmentElement = svgElement.appendChild(segments[segment]);
-            //         objThis.settings.elements.segments.push({data_id: objThis.settings.elements.segments.length, element: $(segmentElement)});
+            //         instance.settings.elements.segments.push({data_id: instance.settings.elements.segments.length, element: $(segmentElement)});
             //     }
             // }
 
             /* ******* jQuery element in settings.data array approach ******* */
 
-            const group = svgElement.appendChild(methods.drawGroup());
+            const group = svgElement.appendChild(instance._methods.drawGroup(instance));
 
             for (const item in data) {
                 if (data.hasOwnProperty(item)) {
@@ -319,18 +318,18 @@
                     const segmentElement = group.appendChild(segment); //svgElement.appendChild(segment);
                     const $segmentElement = $(segmentElement);
                     data[item]['element'] = $segmentElement;
-                    objThis.settings.elements.segments.push($segmentElement);
+                    instance.settings.elements.segments.push($segmentElement);
                 }
             }
 
-            objThis.settings.elements.svg = svgElement;
-            objThis.settings.elements.group = $(group);
+            instance.settings.elements.svg = svgElement;
+            instance.settings.elements.group = $(group);
         },
 
-        addEventListeners() {
+        addEventListeners(instance) {
             /* ******* jQuery element in settings.data array approach ******* */
 
-            const items = objThis.settings.data;
+            const items = instance.settings.data;
 
             for (const item in items) {
                 if (items.hasOwnProperty(item)) {
@@ -338,7 +337,7 @@
                     segment.on('mouseover', function () {
                         const $this = $(this);
                         // todo: remake the instance getting
-                        const instance = $this.closest('.' + pluginNameLower).parent().data('plugin_' + pluginName);
+                        //const instance = $this.closest('.' + instance._nameLower).parent().data('plugin_' + instance._name);
                         const dId = $this.attr('d-id');
                         $this.removeClass('active');
                         $this.addClass('active');
@@ -370,7 +369,7 @@
                     segment.on('mouseout', function () {
                         const $this = $(this);
                         // todo: remake the instance getting
-                        const instance = $this.closest('.' + pluginNameLower).parent().data('plugin_' + pluginName);
+                        //const instance = $this.closest('.' + instance._nameLower).parent().data('plugin_' + instance._name);
                         const dId = $this.attr('d-id');
                         $this.removeClass('active');
                         switch (instance.settings.appearance.type) {
@@ -403,10 +402,10 @@
 
             /* ******* jQuery element in settings.elements array approach ******* */
 
-            // const segments = objThis.settings.elements.segments;
+            // const segments = instance.settings.elements.segments;
             // for (const segment in segments) {
             //     if (segments.hasOwnProperty(segment)) {
-            //         const data = objThis.settings.data[segments[segment]['data_id']];
+            //         const data = instance.settings.data[segments[segment]['data_id']];
             //         const $element = segments[segment]['element'];
             //         $element.on('mouseover', function () {
             //             const $this = $(this);
@@ -425,7 +424,7 @@
 
         /* DONUT */
 
-        drawBodyBaseDonut(options) {
+        drawBodyBaseDonut(instance, options) {
             const defaults = {
                 type: 'circle', // ['path', 'circle']
             };
@@ -434,10 +433,10 @@
             let response = {};
 
             const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-            svg.setAttribute('class', objPrefix + 'donut');
+            svg.setAttribute('class', instance._objPrefix + 'donut');
             svg.setAttribute('width', '100%');
             svg.setAttribute('height', '100%');
-            svg.setAttribute('viewBox', `0 0 ${objThis.settings.appearance.centerX * 2} ${objThis.settings.appearance.centerY * 2}`); // double cx and cy
+            svg.setAttribute('viewBox', `0 0 ${instance.settings.appearance.centerX * 2} ${instance.settings.appearance.centerY * 2}`); // double cx and cy
             svg.setAttributeNS("http://www.w3.org/2000/xmlns/", "xmlns:xlink", "http://www.w3.org/1999/xlink");
 
             /* common vars */
@@ -447,39 +446,40 @@
                 case 'circle':
                     /* -------- Method 1 - Circle -------- */
 
-                    donutRing = methods.drawSvgCircle({
-                        class: objPrefix + 'donut--ring' + objPrefix + 'donut--ring-circle',
+                    donutRing = instance._methods.drawSvgCircle(instance, {
+                        class: instance._objPrefix + 'donut--ring' + instance._objPrefix + 'donut--ring-circle',
                         fill: 'transparent',
-                        stroke: objThis.settings.appearance.baseColor,
-                        'stroke-width': objThis.settings.appearance.baseStrokeWidth
+                        stroke: instance.settings.appearance.baseColor,
+                        'stroke-width': instance.settings.appearance.baseStrokeWidth
                     });
                     const donutHole = null;
-                    // const donutHole = objThis.drawSvgCircle({
-                    //     class: objPrefix + 'donut--hole'
+                    // const donutHole = instance._methods.drawSvgCircle(instance, {
+                    //     class: instance._objPrefix + 'donut--hole'
                     // });
+
 
                     response = {'svg': svg, 'ring': donutRing, 'hole': donutHole};
                     break;
                 case 'path':
                     /* -------- Method 2 - Path - Arc and Line -------- */
 
-                    const baseDoughnutRadius = objThis.settings.appearance.radius + objThis.settings.appearance.baseStrokeWidth; // + objThis.settings.appearance.baseOffset;
-                    const cutoutRadius = objThis.settings.appearance.radius * (objThis.settings.appearance.innerCutout);
-                    const baseCutoutRadius = cutoutRadius - objThis.settings.appearance.baseStrokeWidth; // - objThis.settings.appearance.baseOffset;
+                    const baseDoughnutRadius = instance.settings.appearance.radius + instance.settings.appearance.baseStrokeWidth; // + instance.settings.appearance.baseOffset;
+                    const cutoutRadius = instance.settings.appearance.radius * (instance.settings.appearance.innerCutout);
+                    const baseCutoutRadius = cutoutRadius - instance.settings.appearance.baseStrokeWidth; // - instance.settings.appearance.baseOffset;
 
                     //Calculate values for the path.
                     //We needn't calculate startRadius, segmentAngle and endRadius, because base doughnut doesn't animate.
                     const startRadius = -Math.PI / 2, // -1.570
                         segmentAngle = (99.9999 / 100) * (Math.PI * 2), // 6.2831, // 1 * ((99.9999/100) * (PI*2)),
                         endRadius = startRadius + segmentAngle, // 4.7131
-                        startX = objThis.settings.appearance.centerX + Math.cos(startRadius) * baseDoughnutRadius,
-                        startY = objThis.settings.appearance.centerY + Math.sin(startRadius) * baseDoughnutRadius,
-                        endX2 = objThis.settings.appearance.centerX + Math.cos(startRadius) * baseCutoutRadius,
-                        endY2 = objThis.settings.appearance.centerY + Math.sin(startRadius) * baseCutoutRadius,
-                        endX = objThis.settings.appearance.centerX + Math.cos(endRadius) * baseDoughnutRadius,
-                        endY = objThis.settings.appearance.centerY + Math.sin(endRadius) * baseDoughnutRadius,
-                        startX2 = objThis.settings.appearance.centerX + Math.cos(endRadius) * baseCutoutRadius,
-                        startY2 = objThis.settings.appearance.centerY + Math.sin(endRadius) * baseCutoutRadius;
+                        startX = instance.settings.appearance.centerX + Math.cos(startRadius) * baseDoughnutRadius,
+                        startY = instance.settings.appearance.centerY + Math.sin(startRadius) * baseDoughnutRadius,
+                        endX2 = instance.settings.appearance.centerX + Math.cos(startRadius) * baseCutoutRadius,
+                        endY2 = instance.settings.appearance.centerY + Math.sin(startRadius) * baseCutoutRadius,
+                        endX = instance.settings.appearance.centerX + Math.cos(endRadius) * baseDoughnutRadius,
+                        endY = instance.settings.appearance.centerY + Math.sin(endRadius) * baseDoughnutRadius,
+                        startX2 = instance.settings.appearance.centerX + Math.cos(endRadius) * baseCutoutRadius,
+                        startY2 = instance.settings.appearance.centerY + Math.sin(endRadius) * baseCutoutRadius;
                     const cmd = [
                         'M', startX, startY,
                         'A', baseDoughnutRadius, baseDoughnutRadius, 0, 1, 1, endX, endY,
@@ -488,9 +488,9 @@
                         'Z'
                     ];
 
-                    donutRing = methods.drawSvgPath({
-                        class: objPrefix + 'donut--ring' + objPrefix + 'donut--ring-path',
-                        fill: objThis.settings.appearance.baseColor,
+                    donutRing = instance._methods.drawSvgPath(instance, {
+                        class: instance._objPrefix + 'donut--ring' + instance._objPrefix + 'donut--ring-path',
+                        fill: instance.settings.appearance.baseColor,
                         d: cmd.join(' '),
                     });
 
@@ -501,7 +501,7 @@
             return response;
         },
 
-        drawBodySegmentDonut(data, values, options) {
+        drawBodySegmentDonut(instance, data, values, options) {
             const defaults = {
                 type: 'circle', // ['path', 'circle']
             };
@@ -509,7 +509,7 @@
 
             let segments = [];
             /* common vars */
-            const gap = objThis.settings.appearance.gap; // gap between segments
+            const gap = instance.settings.appearance.gap; // gap between segments
 
             switch (settings.type) {
                 case 'circle':
@@ -517,7 +517,7 @@
 
                     const base_offset = 25; // base offset set to 25 to make the chart start from the top
                     let offset = 0; //offset for dashoffset parameter, increased after every segment is drawn and supplied to dashoffset parameter for the next segment
-                    // const gap = objThis.settings.appearance.gap; // gap between segments
+                    // const gap = instance.settings.appearance.gap; // gap between segments
 
                     for (const segment in data) {
                         if (data.hasOwnProperty(segment)) {
@@ -526,15 +526,15 @@
                             if (data[segment]['draw'] === true) {
                                 // if color is empty, supply the default color from appearance settings
                                 if (typeof data[segment]['color']['normal'] === 'undefined') {
-                                    data[segment]['color']['normal'] = objThis.settings.appearance.segmentColor.normal;
+                                    data[segment]['color']['normal'] = instance.settings.appearance.segmentColor.normal;
                                 }
                                 if (typeof data[segment]['color']['active'] === 'undefined') {
-                                    data[segment]['color']['active'] = objThis.settings.appearance.segmentColor.active;
+                                    data[segment]['color']['active'] = instance.settings.appearance.segmentColor.active;
                                 }
 
-                                const donutSegment = methods.drawSvgCircle({
+                                const donutSegment = instance._methods.drawSvgCircle(instance, {
                                     'd-id': segment,
-                                    class: objPrefix + 'donut--segment' + ' ' + objPrefix + 'donut--segment-circle',
+                                    class: instance._objPrefix + 'donut--segment' + ' ' + instance._objPrefix + 'donut--segment-circle',
                                     fill: 'transparent',
                                     stroke: data[segment]['color']['normal'],
                                     'stroke-width': data[segment]['strokeWidth'],
@@ -557,11 +557,11 @@
                     /* -------- Method 2 - Path - Arc and Line -------- */
 
                     let startRadius = -Math.PI / 2; // -90 degree
-                    const doughnutRadius = objThis.settings.appearance.radius;
-                    const cutoutRadius = doughnutRadius * (objThis.settings.appearance.innerCutout);
-                    const centerX = objThis.settings.appearance.centerX;
-                    const centerY = objThis.settings.appearance.centerY;
-                    // const gap = objThis.settings.appearance.gap; // gap between segments
+                    const doughnutRadius = instance.settings.appearance.radius;
+                    const cutoutRadius = doughnutRadius * (instance.settings.appearance.innerCutout);
+                    const centerX = instance.settings.appearance.centerX;
+                    const centerY = instance.settings.appearance.centerY;
+                    // const gap = instance.settings.appearance.gap; // gap between segments
 
                     // draw each path
                     for (const segment in data) {
@@ -583,10 +583,10 @@
                             if (data[segment]['draw'] === true) {
                                 // if color is empty, supply the default color from appearance settings
                                 if (typeof data[segment]['color']['normal'] === 'undefined') {
-                                    data[segment]['color']['normal'] = objThis.settings.appearance.segmentColor.normal;
+                                    data[segment]['color']['normal'] = instance.settings.appearance.segmentColor.normal;
                                 }
                                 if (typeof data[segment]['color']['active'] === 'undefined') {
-                                    data[segment]['color']['active'] = objThis.settings.appearance.segmentColor.active;
+                                    data[segment]['color']['active'] = instance.settings.appearance.segmentColor.active;
                                 }
 
                                 const cmd = [
@@ -597,9 +597,9 @@
                                     'Z' // Close path
                                 ];
 
-                                const donutSegment = methods.drawSvgPath({
+                                const donutSegment = instance._methods.drawSvgPath(instance, {
                                     'd-id': segment,
-                                    class: objPrefix + 'donut--segment' + ' ' + objPrefix + 'donut--segment-path',
+                                    class: instance._objPrefix + 'donut--segment' + ' ' + instance._objPrefix + 'donut--segment-path',
                                     fill: data[segment]['color']['normal'],
                                     stroke: 'transparent',
                                     'stroke-width': data[segment]['strokeWidth'],
@@ -624,9 +624,9 @@
 
         /* PIE */
 
-        drawBodyBasePie() {
+        drawBodyBasePie(instance) {
             const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-            svg.setAttribute('class', objPrefix + 'pie');
+            svg.setAttribute('class', instance._objPrefix + 'pie');
             svg.setAttribute('width', '100%');
             svg.setAttribute('height', '100%');
             svg.setAttribute('viewBox', '-1 -1 2 2'); // -1 -1 for the offset so that the center point of the circle will be the start for sin and cos functions. 2 2 to simplify the calculations (center at [1,1])
@@ -636,7 +636,7 @@
             return {'svg': svg};
         },
 
-        drawBodySegmentPie(data, values) {
+        drawBodySegmentPie(instance, data, values) {
             let segments = [];
 
             const base_offset = 0; // base offset set to 0 to make the chart start from the top
@@ -647,17 +647,17 @@
                     if (data[segment]['draw'] === true) {
                         // if color is empty, supply the default color from appearance settings
                         if (typeof data[segment]['color']['normal'] === 'undefined') {
-                            data[segment]['color']['normal'] = objThis.settings.appearance.segmentColor.normal;
+                            data[segment]['color']['normal'] = instance.settings.appearance.segmentColor.normal;
                         }
                         if (typeof data[segment]['color']['active'] === 'undefined') {
-                            data[segment]['color']['active'] = objThis.settings.appearance.segmentColor.active;
+                            data[segment]['color']['active'] = instance.settings.appearance.segmentColor.active;
                         }
 
-                        const startCoordinates = methods.getCoordinatesForPercent(base_offset + offset);
+                        const startCoordinates = instance._methods.getCoordinatesForPercent(base_offset + offset);
 
                         offset += data[segment]['percentage_raw'];
 
-                        const endCoordinates = methods.getCoordinatesForPercent(offset);
+                        const endCoordinates = instance._methods.getCoordinatesForPercent(offset);
 
                         const startX = startCoordinates['x'];
                         const startY = startCoordinates['y'];
@@ -672,9 +672,9 @@
                             `L 0 0`,
                         ].join(' ');
 
-                        const donutSegment = methods.drawSvgPath({
+                        const donutSegment = instance._methods.drawSvgPath(instance, {
                             'd-id': segment,
-                            class: objPrefix + 'pie--segment',
+                            class: instance._objPrefix + 'pie--segment',
                             fill: data[segment]['color']['normal'],
                             d: pathData
                         });
@@ -695,7 +695,7 @@
 
         /* --- SVG helpers--- */
 
-        drawGroup(options) {
+        drawGroup(instance, options) {
             const defaults = {
                 'class': '',
             };
@@ -712,15 +712,15 @@
             return group;
         },
 
-        drawSvgCircle(options) {
+        drawSvgCircle(instance, options) {
             const defaults = {
                 'class': '',
-                'cx': objThis.settings.appearance.centerX, // half of viewbox
-                'cy': objThis.settings.appearance.centerY, // half of viewbox
-                'r': objThis.settings.appearance.radius,// 15.91549430918954
+                'cx': instance.settings.appearance.centerX, // half of viewbox
+                'cy': instance.settings.appearance.centerY, // half of viewbox
+                'r': instance.settings.appearance.radius,// 15.91549430918954
                 'fill': '#fff',
                 'stroke': '', // #000
-                'stroke-width': objThis.settings.appearance.strokeWidth,
+                'stroke-width': instance.settings.appearance.strokeWidth,
                 'stroke-dasharray': '',
                 'stroke-dashoffset': '25', // Circumference − All preceding segments’ total length + First segment’s offset = Current segment offset
             };
@@ -737,7 +737,7 @@
             return nCircle;
         },
 
-        drawSvgPath(options) {
+        drawSvgPath(instance, options) {
             const defaults = {
                 'class': '',
                 'fill': '#fff',
@@ -781,14 +781,30 @@
 
         /* --- /SVG helpers--- */
 
-        /* ------------------------------ HELPERS ------------------------------- */
+        /* ------------------------------ STRUCTURE ------------------------------- */
 
-        GetInstance() {
-            methods.Log(objThis);
+        GetInstance(instance) {
+            instance._methods.Log(instance, instance);
         },
 
-        Log(message) {
-            console.log('*** ' + pluginName + ' ***');
+        Destroy(instance) {
+            instance.settings.elements.container.remove();
+            $.removeData(instance.$element, "plugin_" + instance._name);
+        },
+
+        Refresh(instance) {
+            instance.initElement();
+
+            // On Init callback
+            if (instance.settings.callbacks.onRefresh && $.isFunction(instance.settings.callbacks.onRefresh)) {
+                instance.settings.callbacks.onRefresh.call(instance);
+            }
+        },
+
+        /* ------------------------------ HELPERS ------------------------------- */
+
+        Log(instance, message) {
+            console.log('*** ' + instance._name + ' ***');
 
             if (message instanceof Array) {
                 for (let value of message) {
@@ -855,47 +871,24 @@
     // A really lightweight plugin wrapper around the constructor,
     // preventing against multiple instantiations
 
-    //default outside method call: $('#container').data('plugin_defaultPluginName').yourOtherFunction();
+    //default outside method call: pluginInstance._methods.nameOfAnInnerFunction(pluginInstance, arg1, arg2...);
     $.fn[pluginName] = function (options) {
-        // let instances = [];
-        //
-        // this.each(function () {
-        //     if (!$.data(this, "plugin_" + pluginName)) {
-        //         const instance = new Plugin(this, options);
-        //         $.data(this, "plugin_" +
-        //             pluginName, instance);
-        //         instances.push(instance);
-        //     }
-        // });
-        //
-        // if (instances.length === 1) {
-        //     return instances[0];
-        // }
-        //
-        // return null
+        let instances = [];
 
-        if (methods[options]) {
-            return methods[options].apply(this, Array.prototype.slice.call(arguments, 1));
-        } else if (typeof options === "object" || !options) {
-            let instances = [];
-
-            this.each(function () {
-                if (!$.data(this, "plugin_" + pluginName)) {
-                    const instance = new Plugin(this, options);
-                    $.data(this, "plugin_" +
-                        pluginName, instance);
-                    instances.push(instance);
-                }
-            });
-
-            if (instances.length === 1) {
-                return instances[0];
+        this.each(function () {
+            if (!$.data(this, "plugin_" + pluginName)) {
+                const instance = new Plugin(this, options);
+                $.data(this, "plugin_" +
+                    pluginName, instance);
+                instances.push(instance);
             }
+        });
 
-            return null
-        } else {
-            $.error("Method " + options + " does not exist");
+        if (instances.length === 1) {
+            return instances[0];
         }
+
+        return null
     };
 
 })(jQuery, window, document);

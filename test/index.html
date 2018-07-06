@@ -51,11 +51,7 @@
 <script>
     let jchart1, jchart2, jchart3;
     $(function () {
-        jchart1 = $("#element1");
-        jchart2 = $("#element2");
-        jchart3 = $("#element3");
-
-        jchart1.jChart({
+        jchart1 = $("#element1").jChart({
             data: [
                 {
                     value: 300
@@ -92,7 +88,7 @@
                 }
             }
         });
-        jchart2.jChart({
+        jchart2 = $("#element2").jChart({
             data: [
                 {
                     value: 300
@@ -128,7 +124,7 @@
                 }
             }
         });
-        jchart3.jChart({
+        jchart3 = $("#element3").jChart({
             data: [
                 {
                     value: 199
