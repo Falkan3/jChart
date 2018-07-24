@@ -943,10 +943,35 @@
             const data = instance.settings.data;
             const values = instance.settings.values;
 
-            instance._methods.drawBodySegmentDonut(instance, data, values, {
-                'type': instance.settings.appearance.subType,
-                'updateOnly': true
-            });
+            switch (instance.settings.appearance.type) {
+                /* donut chart */
+                case 'donut':
+                    // animation loop
+                    if(instance.settings.appearance.animated) {
+                        instance._methods.animationLoop(instance, function(instance, progress) {
+                            instance._methods.drawBodySegmentDonut(instance, data, values, {
+                                'type': instance.settings.appearance.subType,
+                                'updateOnly': true,
+                                'modifier': progress
+                            });
+                        });
+                    }
+                    break;
+                /* pie chart */
+                case 'pie':
+                    // animation loop
+                    if(instance.settings.appearance.animated) {
+                        instance._methods.animationLoop(instance, function(instance, progress) {
+                            instance._methods.drawBodySegmentPie(instance, data, values, {
+                                'updateOnly': true,
+                                'modifier': progress
+                            });
+                        });
+                    }
+                    break;
+                default:
+                    break;
+            }
         },
 
         Refresh(instance) {
