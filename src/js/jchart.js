@@ -912,13 +912,13 @@
                 if(easing)
                     progress = easeOut(progress);
 
-                //console.log(progress_raw);
+                if (progress > 1)
+                    progress = 1;
 
-                if (progress < 1) {
-                    callback.apply(instance, [instance, progress]);
+                callback.apply(instance, [instance, progress]);
 
+                if (progress < 1)
                     requestAnimationFrame(tick);
-                }
             };
 
             requestAnimationFrame(tick);
