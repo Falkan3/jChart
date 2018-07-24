@@ -1,6 +1,6 @@
 /* line 1, C:/Users/Adam/Documents/Repos/Plugins/jChart/src/scss/_templates.scss */
 .jchart--donut--segment, .jchart--pie--segment {
-  transition: stroke-dasharray 1s ease, stroke cubic-bezier(0.22, 0.61, 0.36, 1) 0.3s, fill cubic-bezier(0.22, 0.61, 0.36, 1) 0.3s;
+  transition: stroke cubic-bezier(0.22, 0.61, 0.36, 1) 0.3s, fill cubic-bezier(0.22, 0.61, 0.36, 1) 0.3s;
 }
 
 /* line 4, C:/Users/Adam/Documents/Repos/Plugins/jChart/src/scss/style.scss */
