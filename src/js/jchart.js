@@ -975,7 +975,7 @@
         },
 
         Refresh(instance) {
-            instance.initElement();
+            instance.initElement(instance);
 
             // On Init callback
             if (instance.settings.callbacks.onRefresh && $.isFunction(instance.settings.callbacks.onRefresh)) {
