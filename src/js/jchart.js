@@ -341,10 +341,13 @@
             for (const item in data) {
                 if (data.hasOwnProperty(item)) {
                     const segment = data[item]['element'];
-                    const segmentElement = group.appendChild(segment); //svgElement.appendChild(segment);
-                    const $segmentElement = $(segmentElement);
-                    data[item]['element'] = $segmentElement;
-                    instance.settings.elements.segments.push($segmentElement);
+
+                    if(typeof segment.nodeType !== 'undefined') {
+                        const segmentElement = group.appendChild(segment); //svgElement.appendChild(segment);
+                        const $segmentElement = $(segmentElement);
+                        data[item]['element'] = $segmentElement;
+                        instance.settings.elements.segments.push($segmentElement);
+                    }
                 }
             }
 
