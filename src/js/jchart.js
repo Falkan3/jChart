@@ -363,69 +363,71 @@
             for (const item in items) {
                 if (items.hasOwnProperty(item)) {
                     const segment = items[item]['element'];
-                    segment.on('mouseover', function () {
-                        const $this = $(this);
-                        // todo: remake the instance getting
-                        //const instance = $this.closest('.' + instance._nameLower).parent().data('plugin_' + instance._name);
-                        const dId = $this.attr('d-id');
-                        $this.removeClass('active');
-                        $this.addClass('active');
-                        switch (instance.settings.appearance.type) {
-                            /* donut chart */
-                            case 'donut':
-                                switch (instance.settings.appearance.subType) {
-                                    /* donut chart - circle */
-                                    case 'circle':
-                                        $this.css('stroke', instance.settings.data[dId]['color']['active']);
-                                        break;
-                                    /* donut chart - path */
-                                    case 'path':
-                                        $this.css('fill', instance.settings.data[dId]['color']['active']);
-                                        break;
-                                }
-                                break;
-                            /* pie chart */
-                            case 'pie':
-                                $this.css('fill', instance.settings.data[dId]['color']['active']);
-                                break;
-                        }
+                    if(typeof segment !== 'undefined' && typeof segment.nodeType !== 'undefined') {
+                        segment.on('mouseover', function () {
+                            const $this = $(this);
+                            // todo: remake the instance getting
+                            //const instance = $this.closest('.' + instance._nameLower).parent().data('plugin_' + instance._name);
+                            const dId = $this.attr('d-id');
+                            $this.removeClass('active');
+                            $this.addClass('active');
+                            switch (instance.settings.appearance.type) {
+                                /* donut chart */
+                                case 'donut':
+                                    switch (instance.settings.appearance.subType) {
+                                        /* donut chart - circle */
+                                        case 'circle':
+                                            $this.css('stroke', instance.settings.data[dId]['color']['active']);
+                                            break;
+                                        /* donut chart - path */
+                                        case 'path':
+                                            $this.css('fill', instance.settings.data[dId]['color']['active']);
+                                            break;
+                                    }
+                                    break;
+                                /* pie chart */
+                                case 'pie':
+                                    $this.css('fill', instance.settings.data[dId]['color']['active']);
+                                    break;
+                            }
 
-                        // On Segment Mouseover callback
-                        if (instance.settings.callbacks.onSegmentMouseover && $.isFunction(instance.settings.callbacks.onSegmentMouseover)) {
-                            instance.settings.callbacks.onSegmentMouseover.call(instance, dId, instance.settings.data[dId]);
-                        }
-                    });
-                    segment.on('mouseout', function () {
-                        const $this = $(this);
-                        // todo: remake the instance getting
-                        //const instance = $this.closest('.' + instance._nameLower).parent().data('plugin_' + instance._name);
-                        const dId = $this.attr('d-id');
-                        $this.removeClass('active');
-                        switch (instance.settings.appearance.type) {
-                            /* donut chart */
-                            case 'donut':
-                                switch (instance.settings.appearance.subType) {
-                                    /* donut chart - circle */
-                                    case 'circle':
-                                        $this.css('stroke', '');
-                                        break;
-                                    /* donut chart - path */
-                                    case 'path':
-                                        $this.css('fill', '');
-                                        break;
-                                }
-                                break;
-                            /* pie chart */
-                            case 'pie':
-                                $this.css('fill', '');
-                                break;
-                        }
+                            // On Segment Mouseover callback
+                            if (instance.settings.callbacks.onSegmentMouseover && $.isFunction(instance.settings.callbacks.onSegmentMouseover)) {
+                                instance.settings.callbacks.onSegmentMouseover.call(instance, dId, instance.settings.data[dId]);
+                            }
+                        });
+                        segment.on('mouseout', function () {
+                            const $this = $(this);
+                            // todo: remake the instance getting
+                            //const instance = $this.closest('.' + instance._nameLower).parent().data('plugin_' + instance._name);
+                            const dId = $this.attr('d-id');
+                            $this.removeClass('active');
+                            switch (instance.settings.appearance.type) {
+                                /* donut chart */
+                                case 'donut':
+                                    switch (instance.settings.appearance.subType) {
+                                        /* donut chart - circle */
+                                        case 'circle':
+                                            $this.css('stroke', '');
+                                            break;
+                                        /* donut chart - path */
+                                        case 'path':
+                                            $this.css('fill', '');
+                                            break;
+                                    }
+                                    break;
+                                /* pie chart */
+                                case 'pie':
+                                    $this.css('fill', '');
+                                    break;
+                            }
 
-                        // On Segment Mouseout callback
-                        if (instance.settings.callbacks.onSegmentMouseout && $.isFunction(instance.settings.callbacks.onSegmentMouseout)) {
-                            instance.settings.callbacks.onSegmentMouseout.call(instance, instance.settings.data[dId], instance.settings.data[dId]);
-                        }
-                    });
+                            // On Segment Mouseout callback
+                            if (instance.settings.callbacks.onSegmentMouseout && $.isFunction(instance.settings.callbacks.onSegmentMouseout)) {
+                                instance.settings.callbacks.onSegmentMouseout.call(instance, instance.settings.data[dId], instance.settings.data[dId]);
+                            }
+                        });
+                    }
                 }
             }
 
