@@ -575,6 +575,7 @@
 
                                 let drawOnly = false;
                                 let element = null;
+                                const title = data[segment]['title'] + ': ' + data[segment]['value'] + ' (' + Math.round(data[segment]['percentage'] * 10) / 10 + '%)';
                                 if (settings.updateOnly) {
                                     drawOnly = true;
                                     element = data[segment]['element'][0];
@@ -583,7 +584,7 @@
                                     svgCircleOptions = {
                                         'd-id': segment,
                                         class: instance._objPrefix + 'donut--segment' + ' ' + instance._objPrefix + 'donut--segment-circle',
-                                        title: data[segment]['title'] + ': ' + data[segment]['value'] + ' (' + data[segment]['percentage'] + '%)',
+                                        title: title,
                                         fill: 'transparent',
                                         stroke: data[segment]['color']['normal'],
                                         'stroke-width': data[segment]['strokeWidth'],
@@ -593,7 +594,7 @@
                                 } else {
                                     // svg settings for only draw
                                     svgCircleOptions = {
-                                        title: data[segment]['title'] + ': ' + data[segment]['value'] + ' (' + data[segment]['percentage'] + '%)',
+                                        title: title,
                                         fill: 'transparent',
                                         stroke: data[segment]['color']['normal'],
                                         'stroke-width': data[segment]['strokeWidth'],
@@ -666,6 +667,7 @@
 
                                 let drawOnly = false;
                                 let element = null;
+                                const title = data[segment]['title'] + ': ' + data[segment]['value'] + ' (' + Math.round(data[segment]['percentage'] * 10) / 10 + '%)';
                                 // update only settings
                                 if (settings.updateOnly) {
                                     drawOnly = true;
@@ -675,7 +677,7 @@
                                     svgPathOptions = {
                                         'd-id': segment,
                                         class: instance._objPrefix + 'donut--segment' + ' ' + instance._objPrefix + 'donut--segment-path',
-                                        title: data[segment]['title'] + ': ' + data[segment]['value'] + ' (' + data[segment]['percentage'] + '%)',
+                                        title: title,
                                         fill: data[segment]['color']['normal'],
                                         stroke: 'transparent',
                                         'stroke-width': data[segment]['strokeWidth'],
@@ -684,7 +686,7 @@
                                 } else {
                                     // svg settings for only draw
                                     svgPathOptions = {
-                                        title: data[segment]['title'] + ': ' + data[segment]['value'] + ' (' + data[segment]['percentage'] + '%)',
+                                        title: title,
                                         fill: data[segment]['color']['normal'],
                                         stroke: 'transparent',
                                         'stroke-width': data[segment]['strokeWidth'],
