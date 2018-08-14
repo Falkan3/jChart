@@ -46,7 +46,7 @@
                     draw: true, // whether to draw the segment on the chart or not; default true
                     push: true, // whether to push the next segment via offset. Best to set false together when draw is set to false (the empty section will always be at the end that way); default true
                     order: null, // drawing order
-                    name: '',
+                    title: 'untitled',
                     strokeWidth: 3
                 }
             },
@@ -578,6 +578,7 @@
                                     svgCircleOptions = {
                                         'd-id': segment,
                                         class: instance._objPrefix + 'donut--segment' + ' ' + instance._objPrefix + 'donut--segment-circle',
+                                        title: data[segment]['title'] + ': ' + data[segment]['value'] + ' (' + data[segment]['percentage'] + '%)',
                                         fill: 'transparent',
                                         stroke: data[segment]['color']['normal'],
                                         'stroke-width': data[segment]['strokeWidth'],
@@ -587,6 +588,7 @@
                                 } else {
                                     // svg settings for only draw
                                     svgCircleOptions = {
+                                        title: data[segment]['title'] + ': ' + data[segment]['value'] + ' (' + data[segment]['percentage'] + '%)',
                                         fill: 'transparent',
                                         stroke: data[segment]['color']['normal'],
                                         'stroke-width': data[segment]['strokeWidth'],
@@ -668,6 +670,7 @@
                                     svgPathOptions = {
                                         'd-id': segment,
                                         class: instance._objPrefix + 'donut--segment' + ' ' + instance._objPrefix + 'donut--segment-path',
+                                        title: data[segment]['title'] + ': ' + data[segment]['value'] + ' (' + data[segment]['percentage'] + '%)',
                                         fill: data[segment]['color']['normal'],
                                         stroke: 'transparent',
                                         'stroke-width': data[segment]['strokeWidth'],
@@ -676,6 +679,7 @@
                                 } else {
                                     // svg settings for only draw
                                     svgPathOptions = {
+                                        title: data[segment]['title'] + ': ' + data[segment]['value'] + ' (' + data[segment]['percentage'] + '%)',
                                         fill: data[segment]['color']['normal'],
                                         stroke: 'transparent',
                                         'stroke-width': data[segment]['strokeWidth'],
