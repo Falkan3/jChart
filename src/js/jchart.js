@@ -342,7 +342,7 @@
                 if (data.hasOwnProperty(item)) {
                     const segment = data[item]['element'];
 
-                    if(typeof segment.nodeType !== 'undefined') {
+                    if(typeof segment !== 'undefined' && typeof segment.nodeType !== 'undefined') {
                         const segmentElement = group.appendChild(segment); //svgElement.appendChild(segment);
                         const $segmentElement = $(segmentElement);
                         data[item]['element'] = $segmentElement;
