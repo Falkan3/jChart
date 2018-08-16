@@ -551,7 +551,8 @@
             }
             /* common vars */
             const drawableSegments = data.filter(function (segment) {
-                return segment.draw === true;
+                return segment.draw === true &&
+                    segment.percentage_raw > 0;
             }).length;
 
             if(settings.modifier === 1) {
