@@ -63,7 +63,7 @@
                 animated: true,
 
                 /* DONUT AND CIRCLE */
-                radius: 100 / (2 * Math.PI),
+                radius: 100 / (2 * Math.PI), // 125 for full area of the SVG canvas
                 innerCutout: 0.75, // how "thin" the segments are from the center point. (0 will render a pie chart (full circle))
                 centerX: 21,
                 centerY: 21,
@@ -509,12 +509,12 @@
                         endRadius = startRadius + segmentAngle, // 4.7131
                         startX = instance.settings.appearance.centerX + Math.cos(startRadius) * baseDoughnutRadius,
                         startY = instance.settings.appearance.centerY + Math.sin(startRadius) * baseDoughnutRadius,
-                        endX2 = instance.settings.appearance.centerX + Math.cos(startRadius) * baseCutoutRadius,
-                        endY2 = instance.settings.appearance.centerY + Math.sin(startRadius) * baseCutoutRadius,
                         endX = instance.settings.appearance.centerX + Math.cos(endRadius) * baseDoughnutRadius,
                         endY = instance.settings.appearance.centerY + Math.sin(endRadius) * baseDoughnutRadius,
                         startX2 = instance.settings.appearance.centerX + Math.cos(endRadius) * baseCutoutRadius,
-                        startY2 = instance.settings.appearance.centerY + Math.sin(endRadius) * baseCutoutRadius;
+                        startY2 = instance.settings.appearance.centerY + Math.sin(endRadius) * baseCutoutRadius,
+                        endX2 = instance.settings.appearance.centerX + Math.cos(startRadius) * baseCutoutRadius,
+                        endY2 = instance.settings.appearance.centerY + Math.sin(startRadius) * baseCutoutRadius;
                     const cmd = [
                         'M', startX, startY,
                         'A', baseDoughnutRadius, baseDoughnutRadius, 0, 1, 1, endX, endY,
@@ -550,7 +550,16 @@
                 segments = instance.settings.data;
             }
             /* common vars */
-            const gap = instance.settings.appearance.gap; // gap between segments
+            const drawableSegments = data.filter(function (segment) {
+                return segment.draw === true;
+            }).length;
+
+            if(settings.modifier === 1) {
+                console.log(drawableSegments);
+                console.log('---');
+            }
+
+            const gap = drawableSegments > 1 ? instance.settings.appearance.gap : 0.00001; // gap between segments. Set to that number because 0 causes unwanted behavior.
 
             switch (settings.type) {
                 case 'circle':
@@ -642,12 +651,12 @@
                                 largeArc = ((endRadius - startRadius) % (Math.PI * 2)) > Math.PI ? 1 : 0,
                                 startX = centerX + Math.cos(startRadius) * doughnutRadius,
                                 startY = centerY + Math.sin(startRadius) * doughnutRadius,
-                                endX2 = centerX + Math.cos(startRadius) * cutoutRadius,
-                                endY2 = centerY + Math.sin(startRadius) * cutoutRadius,
                                 endX = centerX + Math.cos(endRadius) * doughnutRadius,
                                 endY = centerY + Math.sin(endRadius) * doughnutRadius,
                                 startX2 = centerX + Math.cos(endRadius) * cutoutRadius,
-                                startY2 = centerY + Math.sin(endRadius) * cutoutRadius;
+                                startY2 = centerY + Math.sin(endRadius) * cutoutRadius,
+                                endX2 = centerX + Math.cos(startRadius) * cutoutRadius,
+                                endY2 = centerY + Math.sin(startRadius) * cutoutRadius;
 
                             if (data[segment]['draw'] === true) {
                                 // if color is empty, supply the default color from appearance settings
