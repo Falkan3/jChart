@@ -292,8 +292,8 @@
                     }
 
                     // animation loop
-                    if(instance.settings.appearance.animated) {
-                        instance._methods.animationLoop(instance, function(instance, progress) {
+                    if (instance.settings.appearance.animated) {
+                        instance._methods.animationLoop(instance, function (instance, progress) {
                             instance._methods.drawBodySegmentDonut(instance, data, values, {
                                 'type': instance.settings.appearance.subType,
                                 'updateOnly': true,
@@ -312,8 +312,8 @@
                     svgElement = instance.settings.elements.body[0].appendChild(svg);
 
                     // animation loop
-                    if(instance.settings.appearance.animated) {
-                        instance._methods.animationLoop(instance, function(instance, progress) {
+                    if (instance.settings.appearance.animated) {
+                        instance._methods.animationLoop(instance, function (instance, progress) {
                             instance._methods.drawBodySegmentPie(instance, data, values, {
                                 'updateOnly': true,
                                 'modifier': progress
@@ -342,7 +342,7 @@
                 if (data.hasOwnProperty(item)) {
                     const segment = data[item]['element'];
 
-                    if(typeof segment !== 'undefined' && typeof segment.nodeType !== 'undefined') {
+                    if (typeof segment !== 'undefined' && typeof segment.nodeType !== 'undefined') {
                         const segmentElement = group.appendChild(segment); //svgElement.appendChild(segment);
                         const $segmentElement = $(segmentElement);
                         data[item]['element'] = $segmentElement;
@@ -363,7 +363,11 @@
             for (const item in items) {
                 if (items.hasOwnProperty(item)) {
                     const segment = items[item]['element'];
-                    if(typeof segment !== 'undefined' && typeof segment.nodeType !== 'undefined') {
+
+                    //console.log(segment.nodeType);
+                    //typeof segment.nodeType !== 'undefined'
+
+                    if (typeof segment !== 'undefined') {
                         segment.on('mouseover', function () {
                             const $this = $(this);
                             // todo: remake the instance getting
@@ -575,7 +579,7 @@
 
                                 let drawOnly = false;
                                 let element = null;
-                                const title = data[segment]['title'] + ': ' + data[segment]['value'] + ' (' + Math.round(data[segment]['percentage'] * 10) / 10 + '%)';
+                                const title = data[segment]['title'] + ': ' + instance._methods.numberFormat(data[segment]['value'], 0, ',', '\xa0') + ' (' + Math.round(data[segment]['percentage'] * 10) / 10 + '%)';
                                 if (settings.updateOnly) {
                                     drawOnly = true;
                                     element = data[segment]['element'][0];
@@ -667,7 +671,7 @@
 
                                 let drawOnly = false;
                                 let element = null;
-                                const title = data[segment]['title'] + ': ' + data[segment]['value'] + ' (' + Math.round(data[segment]['percentage'] * 10) / 10 + '%)';
+                                const title = data[segment]['title'] + ': ' + instance._methods.numberFormat(data[segment]['value'], 0, ',', '\xa0') + ' (' + Math.round(data[segment]['percentage'] * 10) / 10 + '%)';
                                 // update only settings
                                 if (settings.updateOnly) {
                                     drawOnly = true;
@@ -920,7 +924,7 @@
                 const progress_raw = time.elapsed / time.total;
                 let eased = 1;
                 let progress = progress_raw;
-                if(easing)
+                if (easing)
                     progress = easeOut(progress);
 
                 if (progress > 1)
@@ -946,6 +950,10 @@
             $.removeData(instance.$element, "plugin_" + instance._name);
         },
 
+        /*
+         * Use this function to only update values of current segments, e.g. swapping the value of segment 1 from '100' to '3000'.
+         * This will not draw the segments from scratch, so if the number of segment changes, use the Refresh function instead.
+         */
         Update(instance) {
             // calculate data values required to draw the graph
             instance._methods.calculateDataValues(instance);
@@ -958,8 +966,8 @@
                 /* donut chart */
                 case 'donut':
                     // animation loop
-                    if(instance.settings.appearance.animated) {
-                        instance._methods.animationLoop(instance, function(instance, progress) {
+                    if (instance.settings.appearance.animated) {
+                        instance._methods.animationLoop(instance, function (instance, progress) {
                             instance._methods.drawBodySegmentDonut(instance, data, values, {
                                 'type': instance.settings.appearance.subType,
                                 'updateOnly': true,
@@ -971,8 +979,8 @@
                 /* pie chart */
                 case 'pie':
                     // animation loop
-                    if(instance.settings.appearance.animated) {
-                        instance._methods.animationLoop(instance, function(instance, progress) {
+                    if (instance.settings.appearance.animated) {
+                        instance._methods.animationLoop(instance, function (instance, progress) {
                             instance._methods.drawBodySegmentPie(instance, data, values, {
                                 'updateOnly': true,
                                 'modifier': progress
@@ -985,6 +993,10 @@
             }
         },
 
+        /*
+         * Use this function to draw a new set of data. This will redraw all the segments from scratch.
+         * Needed when a change of number of segments occurs.
+         */
         Refresh(instance) {
             instance._methods.initElement(instance);
 
@@ -1059,6 +1071,30 @@
 
             return output;
         },
+
+        numberFormat(number, decimals, dec_point, thousands_sep) {
+            // Strip all characters but numerical ones.
+            number = (number + '').replace(/[^0-9+\-Ee.]/g, '');
+            var n = !isFinite(+number) ? 0 : +number,
+                prec = !isFinite(+decimals) ? 0 : Math.abs(decimals),
+                sep = (typeof thousands_sep === 'undefined') ? ',' : thousands_sep,
+                dec = (typeof dec_point === 'undefined') ? '.' : dec_point,
+                s = '',
+                toFixedFix = function (n, prec) {
+                    var k = Math.pow(10, prec);
+                    return '' + Math.round(n * k) / k;
+                };
+            // Fix for IE parseFloat(0.55).toFixed(0) = 0;
+            s = (prec ? toFixedFix(n, prec) : '' + Math.round(n)).split('.');
+            if (s[0].length > 3) {
+                s[0] = s[0].replace(/\B(?=(?:\d{3})+(?!\d))/g, sep);
+            }
+            if ((s[1] || '').length < prec) {
+                s[1] = s[1] || '';
+                s[1] += new Array(prec - s[1].length + 1).join('0');
+            }
+            return s.join(dec);
+        }
     };
 
     // A really lightweight plugin wrapper around the constructor,
