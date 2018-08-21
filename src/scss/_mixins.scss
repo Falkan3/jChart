@@ -1,3 +1,11 @@
+@mixin transform($props...) {
+	-webkit-transform: $props;
+	-moz-transform: $props;
+	-ms-transform: $props;
+	-o-transform: $props;
+	transform: $props;
+}
+
 @mixin border-radius($props...) {
 	-webkit-border-radius: $props;
 	-moz-border-radius: $props;

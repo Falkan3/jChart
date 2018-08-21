@@ -23,7 +23,7 @@
     // Create the defaults once
     const pluginName = "jChart",
         pluginNameLower = pluginName.toLowerCase(),
-        objPrefix = 'jchart--',
+        objPrefix = 'jchart__',
 
         defaults = {
             elements: {
@@ -61,6 +61,16 @@
                 baseStrokeWidth: 1,
                 strokeWidth: 3, // default stroke width for all segments
                 animated: true,
+
+                /* TITLE */
+                title: {
+                    chartTitle: '',
+                    // tooltips
+                    showValue: true,
+                    showPercentage: true,
+                    // summary - show a value inside the donut chart
+                    showSummary: true,
+                },
 
                 /* DONUT AND CIRCLE */
                 radius: 100 / (2 * Math.PI), // 125 for full area of the SVG canvas
@@ -154,9 +164,6 @@
                 }
             }
 
-            //console.log(data);
-            //console.log(values.maxval);
-
             // calculate the single data values
             for (const segment in data) {
                 if (data.hasOwnProperty(segment)) {
@@ -212,7 +219,7 @@
             /* ---- cleanup ---- */
 
             const $container = $('<div>', {'class': pluginNameLower});
-            const $figure = $('<figure>');
+            const $figure = $('<figure>', {'class': instance._objPrefix + 'figure'});
 
             instance.settings.elements.container = $container;
             instance.settings.elements.figure = $figure;
@@ -301,6 +308,20 @@
                             });
                         });
                     }
+
+                    // set text inside donut chart summary
+                    if(instance.settings.appearance.title.showSummary) {
+                        // count drawable segments in chart (visible and non-zero value segments)
+                        const drawableSegments = instance._methods.getDrawableSegments(instance, data, true);
+                        if(drawableSegments.length === 1) {
+                            // draw svg text element and append it to the svg element
+                            const chartSummary = instance._methods.drawSvgText(instance, {'class': `${instance._objPrefix}summary`});
+                            instance.settings.elements.summary = chartSummary;
+                            svgElement.appendChild(chartSummary);
+                            // set summary text to the single segment percentage
+                            instance.settings.elements.summary.innerHTML = `${drawableSegments[0].percentage}%`;
+                        }
+                    }
                     break;
                 /* pie chart */
                 case 'pie':
@@ -363,9 +384,6 @@
             for (const item in items) {
                 if (items.hasOwnProperty(item)) {
                     const segment = items[item]['element'];
-
-                    //console.log(segment.nodeType);
-                    //typeof segment.nodeType !== 'undefined'
 
                     if (typeof segment !== 'undefined') {
                         segment.on('mouseover', function () {
@@ -482,14 +500,14 @@
                     /* -------- Method 1 - Circle -------- */
 
                     donutRing = instance._methods.drawSvgCircle(instance, {
-                        class: instance._objPrefix + 'donut--ring' + instance._objPrefix + 'donut--ring-circle',
+                        class: instance._objPrefix + 'donut__ring' + instance._objPrefix + 'donut__ring-circle',
                         fill: 'transparent',
                         stroke: instance.settings.appearance.baseColor,
                         'stroke-width': instance.settings.appearance.baseStrokeWidth
                     });
                     const donutHole = null;
                     // const donutHole = instance._methods.drawSvgCircle(instance, {
-                    //     class: instance._objPrefix + 'donut--hole'
+                    //     class: instance._objPrefix + 'donut__hole'
                     // });
 
 
@@ -524,7 +542,7 @@
                     ];
 
                     donutRing = instance._methods.drawSvgPath(instance, {
-                        class: instance._objPrefix + 'donut--ring' + instance._objPrefix + 'donut--ring-path',
+                        class: `${instance._objPrefix}donut__ring ${instance._objPrefix}donut__ring-path`,
                         fill: instance.settings.appearance.baseColor,
                         d: cmd.join(' '),
                     });
@@ -545,20 +563,9 @@
             const settings = $.extend(true, {}, defaults, options);
 
             let segments = [];
-            if (settings.updateOnly) {
-                data = instance.settings.data;
-                segments = instance.settings.data;
-            }
+            data = instance.settings.data;
             /* common vars */
-            const drawableSegments = data.filter(function (segment) {
-                return segment.draw === true &&
-                    segment.percentage_raw > 0;
-            }).length;
-
-            if(settings.modifier === 1) {
-                console.log(drawableSegments);
-                console.log('---');
-            }
+            const drawableSegments = instance._methods.getDrawableSegments(instance, data).length;
 
             const gap = drawableSegments > 1 ? instance.settings.appearance.gap : 0.00001; // gap between segments. Set to that number because 0 causes unwanted behavior.
 
@@ -589,16 +596,29 @@
 
                                 let drawOnly = false;
                                 let element = null;
-                                const title = data[segment]['title'] + ': ' + instance._methods.numberFormat(data[segment]['value'], 0, ',', '\xa0') + ' (' + Math.round(data[segment]['percentage'] * 10) / 10 + '%)';
+
+                                // format the segment title
+                                const titlePartials = {
+                                    'segmentTitle': data[segment]['title'],
+                                    'segmentValue': instance._methods.numberFormat(data[segment]['value'], 0, ',', '\xa0'),
+                                    'segmentPercentage': Math.round(data[segment]['percentage'] * 10) / 10
+                                };
+                                let title = titlePartials.segmentTitle;
+                                if(instance.settings.appearance.title.showValue && instance.settings.appearance.title.showPercentage) {
+                                    title += `: ${titlePartials.segmentValue} (${titlePartials.segmentPercentage}%)`;
+                                } else if(instance.settings.appearance.title.showValue) {
+                                    title += `: ${titlePartials.segmentValue}`;
+                                } else if(instance.settings.appearance.title.showPercentage) {
+                                    title += `: ${titlePartials.segmentPercentage}`;
+                                }
+                                //
+
                                 if (settings.updateOnly) {
                                     drawOnly = true;
                                     element = data[segment]['element'][0];
 
                                     // svg settings for only update
                                     svgCircleOptions = {
-                                        'd-id': segment,
-                                        class: instance._objPrefix + 'donut--segment' + ' ' + instance._objPrefix + 'donut--segment-circle',
-                                        title: title,
                                         fill: 'transparent',
                                         stroke: data[segment]['color']['normal'],
                                         'stroke-width': data[segment]['strokeWidth'],
@@ -608,6 +628,8 @@
                                 } else {
                                     // svg settings for only draw
                                     svgCircleOptions = {
+                                        'd-id': segment,
+                                        class: `${instance._objPrefix}donut__segment ${instance._objPrefix}donut__segment-circle`,
                                         title: title,
                                         fill: 'transparent',
                                         stroke: data[segment]['color']['normal'],
@@ -681,7 +703,23 @@
 
                                 let drawOnly = false;
                                 let element = null;
-                                const title = data[segment]['title'] + ': ' + instance._methods.numberFormat(data[segment]['value'], 0, ',', '\xa0') + ' (' + Math.round(data[segment]['percentage'] * 10) / 10 + '%)';
+
+                                // format the segment title
+                                const titlePartials = {
+                                    'segmentTitle': data[segment]['title'],
+                                    'segmentValue': instance._methods.numberFormat(data[segment]['value'], 0, ',', '\xa0'),
+                                    'segmentPercentage': Math.round(data[segment]['percentage'] * 10) / 10
+                                };
+                                let title = titlePartials.segmentTitle;
+                                if(instance.settings.appearance.title.showValue && instance.settings.appearance.title.showPercentage) {
+                                    title += `: ${titlePartials.segmentValue} (${titlePartials.segmentPercentage}%)`;
+                                } else if(instance.settings.appearance.title.showValue) {
+                                    title += `: ${titlePartials.segmentValue}`;
+                                } else if(instance.settings.appearance.title.showPercentage) {
+                                    title += `: ${titlePartials.segmentPercentage}`;
+                                }
+                                //
+
                                 // update only settings
                                 if (settings.updateOnly) {
                                     drawOnly = true;
@@ -689,9 +727,6 @@
 
                                     // svg settings for only update
                                     svgPathOptions = {
-                                        'd-id': segment,
-                                        class: instance._objPrefix + 'donut--segment' + ' ' + instance._objPrefix + 'donut--segment-path',
-                                        title: title,
                                         fill: data[segment]['color']['normal'],
                                         stroke: 'transparent',
                                         'stroke-width': data[segment]['strokeWidth'],
@@ -700,6 +735,8 @@
                                 } else {
                                     // svg settings for only draw
                                     svgPathOptions = {
+                                        'd-id': segment,
+                                        class: `${instance._objPrefix}donut__segment ${instance._objPrefix}donut__segment-path`,
                                         title: title,
                                         fill: data[segment]['color']['normal'],
                                         stroke: 'transparent',
@@ -732,7 +769,7 @@
 
         drawBodyBasePie(instance) {
             const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-            svg.setAttribute('class', instance._objPrefix + 'pie');
+            svg.setAttribute('class', `${instance._objPrefix}pie`);
             svg.setAttribute('width', '100%');
             svg.setAttribute('height', '100%');
             svg.setAttribute('viewBox', '-1 -1 2 2'); // -1 -1 for the offset so that the center point of the circle will be the start for sin and cos functions. 2 2 to simplify the calculations (center at [1,1])
@@ -802,7 +839,8 @@
                             // svg settings for only draw
                             svgPathOptions = {
                                 'd-id': segment,
-                                class: instance._objPrefix + 'pie--segment',
+                                class: `${instance._objPrefix}pie__segment`,
+
                                 fill: data[segment]['color']['normal'],
                                 d: pathData
                             };
@@ -899,11 +937,51 @@
             return nPath;
         },
 
+        drawSvgText(instance, options, updateOnly = false, element = null) {
+            const defaults = {
+                'class': '',
+                'x': instance.settings.appearance.centerX,
+                'y': instance.settings.appearance.centerY,
+                'alignment-baseline': 'middle',
+                'text-anchor': 'middle'
+            };
+            const settings = $.extend(true, {}, defaults, options);
+
+            let nElement = element;
+            if (!updateOnly) {
+                nElement = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            }
+
+            for (const attribute in settings) {
+                if (settings.hasOwnProperty(attribute) && settings[attribute] !== '' && settings[attribute] !== 0) {
+                    nElement.setAttributeNS(null, attribute, settings[attribute]);
+                }
+            }
+
+            return nElement;
+        },
+
         getCoordinatesForPercent(percent) {
             const x = Math.cos(2 * Math.PI * percent);
             const y = Math.sin(2 * Math.PI * percent);
 
             return {x: x, y: y};
+        },
+
+        getDrawableSegments(instance, data, sortByValue = false) {
+            const drawableSegments = data.filter(function (segment) {
+                return segment.draw === true &&
+                    segment.percentage_raw > 0;
+            });
+
+            if(sortByValue) {
+                drawableSegments.sort(function(a, b) {
+                    return a.value > b.value;
+                });
+                drawableSegments.sort();
+            }
+
+            return drawableSegments;
         },
 
         /*
