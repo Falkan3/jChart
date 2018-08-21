@@ -70,6 +70,7 @@
                     showPercentage: true,
                     // summary - show a value inside the donut chart
                     showSummary: true,
+                    summaryTitle: '', // by default it shows the percentage of the greatest segment in the chart
                 },
 
                 /* DONUT AND CIRCLE */
@@ -313,13 +314,20 @@
                     if(instance.settings.appearance.title.showSummary) {
                         // count drawable segments in chart (visible and non-zero value segments)
                         const drawableSegments = instance._methods.getDrawableSegments(instance, data, true);
-                        if(drawableSegments.length === 1) {
+
+                        if(instance.settings.appearance.title.summaryTitle || drawableSegments.length === 1) {
                             // draw svg text element and append it to the svg element
                             const chartSummary = instance._methods.drawSvgText(instance, {'class': `${instance._objPrefix}summary`});
                             instance.settings.elements.summary = chartSummary;
                             svgElement.appendChild(chartSummary);
-                            // set summary text to the single segment percentage
-                            instance.settings.elements.summary.innerHTML = `${drawableSegments[0].percentage}%`;
+
+                            if(instance.settings.appearance.title.summaryTitle) {
+                                // set summary text to the specified value
+                                instance.settings.elements.summary.innerHTML = instance.settings.appearance.title.summaryTitle;
+                            } else {
+                                // set summary text to the single segment percentage
+                                instance.settings.elements.summary.innerHTML = `${drawableSegments[0].percentage}%`;
+                            }
                         }
                     }
                     break;
