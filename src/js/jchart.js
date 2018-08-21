@@ -72,7 +72,7 @@
                     showSummary: false,
                     summaryTitle: '', // by default it shows the percentage of the greatest segment in the chart
                     // (if summaryTitle is empty)
-                    summarySegment: 0 // the segment's id which percentage will be displayed in the summary
+                    summarySegment: null // the segment's id which percentage will be displayed in the summary
                 },
 
                 /* DONUT AND CIRCLE */
@@ -323,7 +323,7 @@
                         if(instance.settings.appearance.title.summaryTitle) {
                             instance.settings.elements.summary.innerHTML = instance.settings.appearance.title.summaryTitle;
                         } else {
-                            if(instance.settings.appearance.title.summarySegment) {
+                            if(typeof instance.settings.appearance.title.summarySegment !== 'undefined') {
                                 const segment = instance.settings.data[instance.settings.appearance.title.summarySegment];
                                 if(typeof segment !== 'undefined') {
                                     const percentage = instance._methods.numberFormat(segment.percentage, 1, ',', '\xa0');
