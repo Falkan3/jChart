@@ -622,7 +622,7 @@
                                 } else if(instance.settings.appearance.title.showValue) {
                                     title += `: ${titlePartials.segmentValue}`;
                                 } else if(instance.settings.appearance.title.showPercentage) {
-                                    title += `: ${titlePartials.segmentPercentage}`;
+                                    title += `: ${titlePartials.segmentPercentage}%`;
                                 }
                                 //
 
