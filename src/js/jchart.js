@@ -323,13 +323,15 @@
                         if(instance.settings.appearance.title.summaryTitle) {
                             instance.settings.elements.summary.innerHTML = instance.settings.appearance.title.summaryTitle;
                         } else {
-                            if(typeof instance.settings.appearance.title.summarySegment !== 'undefined') {
+                            if(instance.settings.appearance.title.summarySegment !== null ) {
+                                // if a summary segment id is given, show the percentage of that segment
                                 const segment = instance.settings.data[instance.settings.appearance.title.summarySegment];
                                 if(typeof segment !== 'undefined') {
                                     const percentage = Math.round(segment.percentage * 10) / 10;
                                     instance.settings.elements.summary.innerHTML = `${percentage}%`;
                                 }
                             } else {
+                                // if no summary segment id is specified, show the percentage of the segment with the greatest value
                                 const drawableSegments = instance._methods.getDrawableSegments(instance, data, true);
                                 instance.settings.elements.summary.innerHTML = `${drawableSegments[0].percentage}%`;
                             }
