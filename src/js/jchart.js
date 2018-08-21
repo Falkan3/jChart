@@ -326,7 +326,7 @@
                             if(typeof instance.settings.appearance.title.summarySegment !== 'undefined') {
                                 const segment = instance.settings.data[instance.settings.appearance.title.summarySegment];
                                 if(typeof segment !== 'undefined') {
-                                    const percentage = instance._methods.numberFormat(segment.percentage, 1, ',', '\xa0');
+                                    const percentage = Math.round(segment.percentage * 10) / 10;
                                     instance.settings.elements.summary.innerHTML = `${percentage}%`;
                                 }
                             } else {
