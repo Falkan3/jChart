@@ -89,7 +89,8 @@
 				// animated: false
 
 				title: {
-                    summaryTitle: 'Lorem'
+                    showSummary: true,
+					summarySegment: 2
 				}
             },
             callbacks: {
@@ -179,7 +180,12 @@
                 baseColor: '#ddd',
                 gap: 1,
                 baseStrokeWidth: 0.5,
-                animated: false
+                animated: false,
+
+                title: {
+                    showSummary: true,
+                    summarySegment: 0
+                }
             },
             callbacks: {
                 onSegmentMouseover: function (did, segment) {

@@ -71,6 +71,8 @@
                     // summary - show a value inside the donut chart
                     showSummary: false,
                     summaryTitle: '', // by default it shows the percentage of the greatest segment in the chart
+                    // (if summaryTitle is empty)
+                    summarySegment: 0 // the segment's id which percentage will be displayed in the summary
                 },
 
                 /* DONUT AND CIRCLE */
@@ -321,8 +323,16 @@
                         if(instance.settings.appearance.title.summaryTitle) {
                             instance.settings.elements.summary.innerHTML = instance.settings.appearance.title.summaryTitle;
                         } else {
-                            const drawableSegments = instance._methods.getDrawableSegments(instance, data, true);
-                            instance.settings.elements.summary.innerHTML = `${drawableSegments[0].percentage}%`;
+                            if(instance.settings.appearance.title.summarySegment) {
+                                const segment = instance.settings.data[instance.settings.appearance.title.summarySegment];
+                                if(typeof segment !== 'undefined') {
+                                    const percentage = instance._methods.numberFormat(segment.percentage, 1, ',', '\xa0');
+                                    instance.settings.elements.summary.innerHTML = `${percentage}%`;
+                                }
+                            } else {
+                                const drawableSegments = instance._methods.getDrawableSegments(instance, data, true);
+                                instance.settings.elements.summary.innerHTML = `${drawableSegments[0].percentage}%`;
+                            }
                         }
                     }
                     break;
@@ -979,7 +989,7 @@
 
             if(sortByValue) {
                 drawableSegments.sort(function(a, b) {
-                    return a.value > b.value;
+                    return a.value < b.value;
                 });
                 drawableSegments.sort();
             }
