@@ -1,5 +1,5 @@
 /*
- *  jChart - v0.0.1
+ *  jChart - v0.1
  *  A plugin template
  *
  *  Made by Adam Kocić (Falkan3)
@@ -83,6 +83,7 @@
 
                 /* DONUT */
                 subType: 'circle', // render type: circle for circle based approach, path for line and arc approach using path
+                isGauge: false, // if the donut will be rendered as a full circle or a half-circle
                 gap: 1, // gap between segments for donut chart (in percentage, 1 = 1%)
             },
             callbacks: {
@@ -313,20 +314,24 @@
                     }
 
                     // set text inside donut chart summary
-                    if(instance.settings.appearance.title.showSummary) {
+                    if (instance.settings.appearance.title.showSummary) {
                         // count drawable segments in chart (visible and non-zero value segments)
                         // draw svg text element and append it to the svg element
-                        const chartSummary = instance._methods.drawSvgText(instance, {'class': `${instance._objPrefix}summary`});
+                        const chartSummary = instance._methods.drawSvgText(instance, {
+                            'class': `${instance._objPrefix}summary`,
+                            'x': instance.settings.appearance.centerX,
+                            'y': instance.settings.appearance.isGauge ? instance.settings.appearance.centerY * 0.9 : instance.settings.appearance.centerY
+                        });
                         instance.settings.elements.summary = chartSummary;
                         svgElement.appendChild(chartSummary);
 
-                        if(instance.settings.appearance.title.summaryTitle) {
+                        if (instance.settings.appearance.title.summaryTitle) {
                             instance.settings.elements.summary.innerHTML = instance.settings.appearance.title.summaryTitle;
                         } else {
-                            if(instance.settings.appearance.title.summarySegment !== null ) {
+                            if (instance.settings.appearance.title.summarySegment !== null) {
                                 // if a summary segment id is given, show the percentage of that segment
                                 const segment = instance.settings.data[instance.settings.appearance.title.summarySegment];
-                                if(typeof segment !== 'undefined') {
+                                if (typeof segment !== 'undefined') {
                                     const percentage = Math.round(segment.percentage * 10) / 10;
                                     instance.settings.elements.summary.innerHTML = `${percentage}%`;
                                 }
@@ -496,6 +501,9 @@
         drawBodyBaseDonut(instance, options) {
             const defaults = {
                 type: 'circle', // ['path', 'circle']
+                isGauge: instance.settings.appearance.isGauge, // gauge chart for donut chart (top half of the circle only)
+                centerX : instance.settings.appearance.centerX,
+                centerY: instance.settings.appearance.isGauge ? instance.settings.appearance.centerY / 2 : instance.settings.appearance.centerY
             };
             const settings = $.extend(true, {}, defaults, options);
 
@@ -505,7 +513,7 @@
             svg.setAttribute('class', instance._objPrefix + 'donut');
             svg.setAttribute('width', '100%');
             svg.setAttribute('height', '100%');
-            svg.setAttribute('viewBox', `0 0 ${instance.settings.appearance.centerX * 2} ${instance.settings.appearance.centerY * 2}`); // double cx and cy
+            svg.setAttribute('viewBox', `0 0 ${settings.centerX * 2} ${settings.centerY * 2}`); // double cx and cy
             svg.setAttributeNS("http://www.w3.org/2000/xmlns/", "xmlns:xlink", "http://www.w3.org/1999/xlink");
 
             /* common vars */
@@ -535,11 +543,12 @@
                     const baseDoughnutRadius = instance.settings.appearance.radius + instance.settings.appearance.baseStrokeWidth; // + instance.settings.appearance.baseOffset;
                     const cutoutRadius = instance.settings.appearance.radius * (instance.settings.appearance.innerCutout);
                     const baseCutoutRadius = cutoutRadius - instance.settings.appearance.baseStrokeWidth; // - instance.settings.appearance.baseOffset;
+                    const rad = (settings.isGauge ? Math.PI : Math.PI * 2); // 180deg : 360deg
 
                     //Calculate values for the path.
                     //We needn't calculate startRadius, segmentAngle and endRadius, because base doughnut doesn't animate.
-                    const startRadius = -Math.PI / 2, // -1.570
-                        segmentAngle = (99.9999 / 100) * (Math.PI * 2), // 6.2831, // 1 * ((99.9999/100) * (PI*2)),
+                    const startRadius = -rad, // -1.570
+                        segmentAngle = (99.9999 / 100) * rad, // 6.2831, // 1 * ((99.9999/100) * (PI*2)),
                         endRadius = startRadius + segmentAngle, // 4.7131
                         startX = instance.settings.appearance.centerX + Math.cos(startRadius) * baseDoughnutRadius,
                         startY = instance.settings.appearance.centerY + Math.sin(startRadius) * baseDoughnutRadius,
@@ -573,17 +582,18 @@
         drawBodySegmentDonut(instance, data, values, options) {
             const defaults = {
                 type: 'circle', // ['path', 'circle']
+                isGauge: instance.settings.appearance.isGauge, // gauge chart for donut chart (top half of the circle only)
                 updateOnly: false,
                 modifier: 1,
+                drawableSegments: instance._methods.getDrawableSegments(instance, data).length
             };
             const settings = $.extend(true, {}, defaults, options);
 
             let segments = [];
             data = instance.settings.data;
-            /* common vars */
-            const drawableSegments = instance._methods.getDrawableSegments(instance, data).length;
 
-            const gap = drawableSegments > 1 ? instance.settings.appearance.gap : 0.00001; // gap between segments. Set to that number because 0 causes unwanted behavior.
+            /* common vars */
+            const gap = (settings.drawableSegments > 1 || settings.isGauge) ? instance.settings.appearance.gap : 0.00001; // gap between segments. Set to that number because 0 causes unwanted behavior.
 
             switch (settings.type) {
                 case 'circle':
@@ -620,11 +630,11 @@
                                     'segmentPercentage': Math.round(data[segment]['percentage'] * 10) / 10
                                 };
                                 let title = titlePartials.segmentTitle;
-                                if(instance.settings.appearance.title.showValue && instance.settings.appearance.title.showPercentage) {
+                                if (instance.settings.appearance.title.showValue && instance.settings.appearance.title.showPercentage) {
                                     title += `: ${titlePartials.segmentValue} (${titlePartials.segmentPercentage}%)`;
-                                } else if(instance.settings.appearance.title.showValue) {
+                                } else if (instance.settings.appearance.title.showValue) {
                                     title += `: ${titlePartials.segmentValue}`;
-                                } else if(instance.settings.appearance.title.showPercentage) {
+                                } else if (instance.settings.appearance.title.showPercentage) {
                                     title += `: ${titlePartials.segmentPercentage}%`;
                                 }
                                 //
@@ -673,21 +683,29 @@
                 case 'path':
                     /* -------- Method 2 - Path - Arc and Line -------- */
 
-                    let startRadius = -Math.PI / 2; // -90 degree
                     const doughnutRadius = instance.settings.appearance.radius;
                     const cutoutRadius = doughnutRadius * (instance.settings.appearance.innerCutout);
                     const centerX = instance.settings.appearance.centerX;
                     const centerY = instance.settings.appearance.centerY;
+                    const startAngle = settings.isGauge ? Math.PI : Math.PI / 2; // 180deg : 90deg
+                    const rad = settings.isGauge ? Math.PI : Math.PI * 2; // 360deg
                     // const gap = instance.settings.appearance.gap; // gap between segments
+                    const gapPercent = (gap / 100);
+                    let gapForSegment = gapPercent; // distribute gap evenly between all segments. One gap percentage is added to offset for startRadius gap.
+
+                    let startRadius = -startAngle; // -90 degree
+                    if (settings.isGauge) {
+                        startRadius += gapPercent * startAngle; // add an additional gap before the first segment
+                        gapForSegment += (gapPercent / settings.drawableSegments); // distribute the additional gap before the first segment between all segments - divide the gap by the segment count and deduct that part from each segment's percentage
+                    }
 
                     // draw each path
                     for (const segment in data) {
                         if (data.hasOwnProperty(segment)) {
-                            const gapPercent = (gap / 100),
-                                gapAngle = gapPercent * (Math.PI * 2),
-                                segmentAngle = settings.modifier * ((data[segment]['percentage_raw'] - gapPercent) * (Math.PI * 2)),
+                            const gapAngle = gapPercent * rad,
+                                segmentAngle = settings.modifier * ((data[segment]['percentage_raw'] - gapForSegment) * rad),
                                 endRadius = startRadius + segmentAngle,
-                                largeArc = ((endRadius - startRadius) % (Math.PI * 2)) > Math.PI ? 1 : 0,
+                                largeArc = ((endRadius - startRadius) % rad) > Math.PI ? 1 : 0,
                                 startX = centerX + Math.cos(startRadius) * doughnutRadius,
                                 startY = centerY + Math.sin(startRadius) * doughnutRadius,
                                 endX = centerX + Math.cos(endRadius) * doughnutRadius,
@@ -727,11 +745,11 @@
                                     'segmentPercentage': Math.round(data[segment]['percentage'] * 10) / 10
                                 };
                                 let title = titlePartials.segmentTitle;
-                                if(instance.settings.appearance.title.showValue && instance.settings.appearance.title.showPercentage) {
+                                if (instance.settings.appearance.title.showValue && instance.settings.appearance.title.showPercentage) {
                                     title += `: ${titlePartials.segmentValue} (${titlePartials.segmentPercentage}%)`;
-                                } else if(instance.settings.appearance.title.showValue) {
+                                } else if (instance.settings.appearance.title.showValue) {
                                     title += `: ${titlePartials.segmentValue}`;
-                                } else if(instance.settings.appearance.title.showPercentage) {
+                                } else if (instance.settings.appearance.title.showPercentage) {
                                     title += `: ${titlePartials.segmentPercentage}%`;
                                 }
                                 //
@@ -956,8 +974,8 @@
         drawSvgText(instance, options, updateOnly = false, element = null) {
             const defaults = {
                 'class': '',
-                'x': instance.settings.appearance.centerX,
-                'y': instance.settings.appearance.centerY,
+                'x': 0,
+                'y': 0,
                 'alignment-baseline': 'middle',
                 'text-anchor': 'middle'
             };
@@ -990,8 +1008,8 @@
                     segment.percentage_raw > 0;
             });
 
-            if(sortByValue) {
-                drawableSegments.sort(function(a, b) {
+            if (sortByValue) {
+                drawableSegments.sort(function (a, b) {
                     return a.value < b.value;
                 });
                 drawableSegments.sort();

@@ -35,6 +35,7 @@
 			display: inline-block;
 			width: 400px;
 			height: 400px;
+			vertical-align: top;
 		}
 
 		* {
@@ -167,16 +168,11 @@
                 {
                     value: 300
                 },
-                {
-                    value: 0
-                },
-                {
-                    value: 0
-                },
             ],
             appearance: {
                 type: 'donut',
                 subType: 'path',
+				isGauge: true,
                 baseColor: '#ddd',
                 gap: 1,
                 baseStrokeWidth: 0.5,
