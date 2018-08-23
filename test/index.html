@@ -52,6 +52,7 @@
 	<div id="element2" class="element"></div>
 	<div id="element3" class="element"></div>
 	<div id="element4" class="element"></div>
+	<div id="element5" class="element"></div>
 </div>
 
 <script>
@@ -182,6 +183,33 @@
                     showSummary: true,
                     //summarySegment: 0
                 }
+            },
+            callbacks: {
+                onSegmentMouseover: function (did, segment) {
+                    // console.log(did);
+                    // console.log(segment);
+                }
+            }
+        });
+        jchart5 = $("#element5").jChart({
+            data: [
+                {
+                    value: 300
+                },
+                {
+                    value: 300,
+                    color: {
+                        normal: '#77dd4f',
+                        active: '#b0ff9f',
+                    },
+                },
+            ],
+            appearance: {
+                type: 'bar',
+                baseColor: '#ddd',
+                gap: 1,
+                baseStrokeWidth: 0.5,
+                animated: true,
             },
             callbacks: {
                 onSegmentMouseover: function (did, segment) {

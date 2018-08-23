@@ -85,6 +85,10 @@
                 subType: 'circle', // render type: circle for circle based approach, path for line and arc approach using path
                 isGauge: false, // if the donut will be rendered as a full circle or a half-circle
                 gap: 1, // gap between segments for donut chart (in percentage, 1 = 1%)
+
+                /* BAR */
+                rx: 0, // horizontal corner radius
+                ry: 0 // vertical corner radius
             },
             callbacks: {
                 onInit() {
@@ -276,6 +280,7 @@
             let svg = null;
             let svgElement = null;
             let segments = [];
+            let markers = [];
 
             switch (instance.settings.appearance.type) {
                 /* donut chart */
@@ -283,8 +288,8 @@
                     graphData = instance._methods.drawBodyBaseDonut(instance, {
                         'type': instance.settings.appearance.subType
                     });
-
                     svg = graphData['svg'];
+
                     segments = instance._methods.drawBodySegmentDonut(instance, data, values, {
                         'type': instance.settings.appearance.subType
                     });
@@ -347,8 +352,8 @@
                 /* pie chart */
                 case 'pie':
                     graphData = instance._methods.drawBodyBasePie(instance);
-
                     svg = graphData['svg'];
+
                     segments = instance._methods.drawBodySegmentPie(instance, data, values);
 
                     svgElement = instance.settings.elements.body[0].appendChild(svg);
@@ -361,6 +366,64 @@
                                 'modifier': progress
                             });
                         });
+                    }
+                    break;
+                case 'bar':
+                    graphData = instance._methods.drawBodyBaseBar(instance);
+                    svg = graphData['svg'];
+
+                    segments = instance._methods.drawBodySegmentBar(instance, data, values);
+
+                    markers = graphData['markers'];
+
+                    svgElement = instance.settings.elements.body[0].appendChild(svg);
+                    svgElement.appendChild(graphData['background']);
+
+                    // animation loop
+                    if (instance.settings.appearance.animated) {
+                        instance._methods.animationLoop(instance, function (instance, progress) {
+                            instance._methods.drawBodySegmentBar(instance, data, values, {
+                                'updateOnly': true,
+                                'modifier': progress
+                            });
+                        });
+                    }
+
+                    // set text inside donut chart summary
+                    if (instance.settings.appearance.title.showSummary) {
+                        // count drawable segments in chart (visible and non-zero value segments)
+                        // draw svg text element and append it to the svg element
+                        instance.settings.elements.summary = [];
+                        let summaryOffsetX = 0;
+
+                        for (const item in data) {
+                            if (data.hasOwnProperty(item)) {
+                                const segment = data[item];
+
+                                const chartSummary = instance._methods.drawSvgText(instance, {
+                                    'class': `${instance._objPrefix}summary`,
+                                    'x': `${segment['percentage'] / 2 + summaryOffsetX}%`,
+                                    'y': '50%'
+                                });
+                                summaryOffsetX += segment['percentage'];
+                                instance.settings.elements.summary.push(chartSummary);
+                                svgElement.appendChild(chartSummary);
+
+                                if (instance.settings.appearance.title.summarySegment !== null) {
+                                    // if a summary segment id is given, show the percentage of that segment
+                                    const segment = instance.settings.data[instance.settings.appearance.title.summarySegment];
+                                    if (typeof segment !== 'undefined') {
+                                        const percentage = Math.round(segment.percentage * 10) / 10;
+                                        chartSummary.innerHTML = `${percentage}%`;
+                                    }
+                                } else {
+                                    // if no summary segment id is specified, show the percentage of the segment with the greatest value
+                                    const drawableSegments = instance._methods.getDrawableSegments(instance, data, true);
+                                    const percentage = Math.round(drawableSegments[0].percentage * 10) / 10;
+                                    chartSummary.innerHTML = `${percentage}%`;
+                                }
+                            }
+                        }
                     }
                     break;
                 default:
@@ -432,6 +495,10 @@
                                 case 'pie':
                                     $this.css('fill', instance.settings.data[dId]['color']['active']);
                                     break;
+                                /* bar chart */
+                                case 'bar':
+                                    $this.css('fill', instance.settings.data[dId]['color']['active']);
+                                    break;
                             }
 
                             // On Segment Mouseover callback
@@ -461,6 +528,10 @@
                                     break;
                                 /* pie chart */
                                 case 'pie':
+                                    $this.css('fill', '');
+                                    break;
+                                /* bar chart */
+                                case 'bar':
                                     $this.css('fill', '');
                                     break;
                             }
@@ -525,7 +596,7 @@
 
                     donutRing = instance._methods.drawSvgCircle(instance, {
                         class: instance._objPrefix + 'donut__ring' + instance._objPrefix + 'donut__ring-circle',
-                        fill: 'transparent',
+                        fill: instance.settings.appearance.baseColor,
                         stroke: instance.settings.appearance.baseColor,
                         'stroke-width': instance.settings.appearance.baseStrokeWidth
                     });
@@ -608,15 +679,6 @@
                             const local_offset = (100 - data[segment]['percentage'] * settings.modifier);
 
                             if (data[segment]['draw'] === true) {
-                                // if color is empty, supply the default color from appearance settings
-                                if (typeof data[segment]['color']['normal'] === 'undefined') {
-                                    data[segment]['color']['normal'] = instance.settings.appearance.segmentColor.normal;
-                                }
-                                if (typeof data[segment]['color']['active'] === 'undefined') {
-                                    data[segment]['color']['active'] = instance.settings.appearance.segmentColor.active;
-                                }
-
-                                // svg settings for both draw and update
                                 // svg settings for both draw and update
                                 let svgCircleOptions = {};
 
@@ -716,14 +778,6 @@
                                 endY2 = centerY + Math.sin(startRadius) * cutoutRadius;
 
                             if (data[segment]['draw'] === true) {
-                                // if color is empty, supply the default color from appearance settings
-                                if (typeof data[segment]['color']['normal'] === 'undefined') {
-                                    data[segment]['color']['normal'] = instance.settings.appearance.segmentColor.normal;
-                                }
-                                if (typeof data[segment]['color']['active'] === 'undefined') {
-                                    data[segment]['color']['active'] = instance.settings.appearance.segmentColor.active;
-                                }
-
                                 const cmd = [
                                     'M', startX, startY, // Move pointer
                                     'A', doughnutRadius, doughnutRadius, 0, largeArc, 1, endX, endY, // Draw outer arc path
@@ -810,7 +864,7 @@
             svg.setAttribute('style', 'transform: rotate(-0.25turn)'); //rotate 25% counter-clockwise so the start point is at the top
             svg.setAttributeNS("http://www.w3.org/2000/xmlns/", "xmlns:xlink", "http://www.w3.org/1999/xlink");
 
-            return {'svg': svg};
+            return {'svg': svg, 'markers': null};
         },
 
         drawBodySegmentPie(instance, data, values, options) {
@@ -828,14 +882,6 @@
             for (const segment in data) {
                 if (data.hasOwnProperty(segment)) {
                     if (data[segment]['draw'] === true) {
-                        // if color is empty, supply the default color from appearance settings
-                        if (typeof data[segment]['color']['normal'] === 'undefined') {
-                            data[segment]['color']['normal'] = instance.settings.appearance.segmentColor.normal;
-                        }
-                        if (typeof data[segment]['color']['active'] === 'undefined') {
-                            data[segment]['color']['active'] = instance.settings.appearance.segmentColor.active;
-                        }
-
                         const startCoordinates = instance._methods.getCoordinatesForPercent(base_offset + offset);
 
                         offset += data[segment]['percentage_raw'] * settings.modifier;
@@ -898,6 +944,88 @@
             return segments;
         },
 
+        /* BAR */
+
+        drawBodyBaseBar(instance) {
+            const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            svg.setAttribute('class', `${instance._objPrefix}bar`);
+            svg.setAttribute('width', '100%');
+            svg.setAttribute('height', '100%');
+            svg.setAttribute('viewBox', '0 0 100 10'); // 100 width and 10 height
+            svg.setAttributeNS("http://www.w3.org/2000/xmlns/", "xmlns:xlink", "http://www.w3.org/1999/xlink");
+
+            const background = instance._methods.drawSvgRect(instance, {
+                fill: instance.settings.appearance.baseColor,
+            }, false, null);
+
+            return {'svg': svg, 'background': background};
+        },
+
+        drawBodySegmentBar(instance, data, values, options) {
+            const defaults = {
+                updateOnly: false,
+                modifier: 1,
+            };
+            const settings = $.extend(true, {}, defaults, options);
+
+            let segments = [];
+
+            const base_offset = 0; // base offset set to 0 to make the chart start from the left
+            let offset = 0; //offset for the next segment
+
+            for (const segment in data) {
+                if (data.hasOwnProperty(segment)) {
+                    if (data[segment]['draw'] === true) {
+                        const startCoordinates = base_offset + offset;
+                        const width = data[segment]['percentage'] * settings.modifier;
+
+                        offset += data[segment]['percentage'] * settings.modifier;
+
+                        // svg settings for both draw and update
+                        let svgRectOptions = {};
+
+                        let drawOnly = false;
+                        let element = null;
+                        if (settings.updateOnly) {
+                            drawOnly = true;
+                            element = data[segment]['element'][0];
+
+                            // svg settings for only update
+                            svgRectOptions = {
+                                width: width,
+                                x: `${startCoordinates}%`,
+                                fill: data[segment]['color']['normal'],
+                            };
+                        } else {
+                            // svg settings for only draw
+                            svgRectOptions = {
+                                'd-id': segment,
+                                class: `${instance._objPrefix}bar__segment`,
+
+                                width: width,
+                                x: `${startCoordinates}%`,
+                                fill: data[segment]['color']['normal'],
+                            };
+                        }
+
+                        const barSegment = instance._methods.drawSvgRect(instance, svgRectOptions, drawOnly, element);
+
+                        if (!settings.updateOnly) {
+                            /* ******* jQuery element in settings.data array approach ******* */
+                            data[segment]['element'] = barSegment;
+                            segments.push(barSegment);
+                        }
+                    } else {
+                        if (data[segment]['push'] === true) {
+                            offset += data[segment]['percentage_raw'];
+                        }
+                    }
+                }
+            }
+
+            return segments;
+        },
+
         /* --- SVG helpers--- */
 
         drawGroup(instance, options) {
@@ -943,6 +1071,35 @@
             }
 
             return nCircle;
+        },
+
+        drawSvgRect(instance, options, updateOnly = false, element = null) {
+            const defaults = {
+                'width': '100%',
+                'height': '100%',
+                'x': 0,
+                'y': 0,
+                'rx': instance.settings.appearance.rx,
+                'ry': instance.settings.appearance.ry,
+                'class': '',
+                'fill': '#fff',
+                'stroke': '', // #000
+                'stroke-width': 0,
+            };
+            const settings = $.extend(true, {}, defaults, options);
+
+            let nRect = element;
+            if (!updateOnly) {
+                nRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            }
+
+            for (const attribute in settings) {
+                if (settings.hasOwnProperty(attribute) && settings[attribute] !== '' && settings[attribute] !== 0) {
+                    nRect.setAttributeNS(null, attribute, settings[attribute]);
+                }
+            }
+
+            return nRect;
         },
 
         drawSvgPath(instance, options, updateOnly = false, element = null) {
@@ -1048,6 +1205,9 @@
                 let progress = progress_raw;
                 if (easing)
                     progress = easeOut(progress);
+
+                if (progress < 0)
+                    progress = 0;
 
                 if (progress > 1)
                     progress = 1;
