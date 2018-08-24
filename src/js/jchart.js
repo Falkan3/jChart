@@ -1,5 +1,5 @@
 /*
- *  jChart - v0.1
+ *  jChart - v0.1.1
  *  A plugin template
  *
  *  Made by Adam Kocić (Falkan3)
@@ -871,34 +871,44 @@
             const defaults = {
                 updateOnly: false,
                 modifier: 1,
+                drawableSegments: instance._methods.getDrawableSegments(instance, data).length
             };
             const settings = $.extend(true, {}, defaults, options);
 
             let segments = [];
 
+            /* common vars */
+            let gap = 0.00001;
+            let baseGap = 0; // gap base value
+            if(instance.settings.appearance.gap && settings.drawableSegments > 1) {
+                gap = instance.settings.appearance.gap;
+                baseGap = gap * 0.1;
+            }
+            // const gap = (settings.drawableSegments > 1) ? instance.settings.appearance.gap : 0.00001; // gap between segments. Set to that number because 0 causes unwanted behavior.
             const base_offset = 0; // base offset set to 0 to make the chart start from the top
-            let offset = 0; //offset for the next segment
+            let offset = 0; // offset for the next segment
+
+            const gapPercent = (gap / 100);
 
             for (const segment in data) {
                 if (data.hasOwnProperty(segment)) {
+                    const percentage = settings.modifier * data[segment]['percentage_raw'];
+
                     if (data[segment]['draw'] === true) {
-                        const startCoordinates = instance._methods.getCoordinatesForPercent(base_offset + offset);
+                        const startCoordinates = instance._methods.getCoordinatesForPercent(1, base_offset + offset + gapPercent);
+                        const endCoordinates = instance._methods.getCoordinatesForPercent(1, base_offset + offset + percentage - gapPercent);
+                        const largeArcFlag = settings.modifier * (data[segment]['percentage_raw']) > .5 ? 1 : 0;
 
-                        offset += data[segment]['percentage_raw'] * settings.modifier;
-
-                        const endCoordinates = instance._methods.getCoordinatesForPercent(offset);
-
-                        const startX = startCoordinates['x'];
-                        const startY = startCoordinates['y'];
-                        const endX = endCoordinates['x'];
-                        const endY = endCoordinates['y'];
-
-                        const largeArcFlag = data[segment]['percentage_raw'] * settings.modifier > .5 ? 1 : 0;
+                        // start and end for gap
+                        let gapCoordinatesStart = instance._methods.getCoordinatesForPercent(baseGap + gapPercent, base_offset + offset + gapPercent);
+                        let gapCoordinatesEnd = instance._methods.getCoordinatesForPercent(baseGap + gapPercent, base_offset + offset + percentage - gapPercent);
+                        let gapCoordinatesCenter = {x: (gapCoordinatesStart['x'] + gapCoordinatesEnd['x']) / 2, y: (gapCoordinatesStart['y'] + gapCoordinatesEnd['y']) / 2};
+                        // /gap
 
                         const pathData = [
-                            `M ${startX} ${startY}`,
-                            `A 1 1 0 ${largeArcFlag} 1 ${endX} ${endY}`,
-                            `L 0 0`,
+                            `M ${startCoordinates['x']} ${startCoordinates['y']}`,
+                            `A 1 1 0 ${largeArcFlag} 1 ${endCoordinates['x']} ${endCoordinates['y']}`,
+                            `L ${gapCoordinatesCenter['x']} ${gapCoordinatesCenter['y']}`,
                         ].join(' ');
 
                         // svg settings for both draw and update
@@ -933,9 +943,11 @@
                             data[segment]['element'] = pieSegment;
                             segments.push(pieSegment);
                         }
+
+                        offset += percentage;
                     } else {
                         if (data[segment]['push'] === true) {
-                            offset += data[segment]['percentage_raw'];
+                            offset += percentage + gapPercent;
                         }
                     }
                 }
@@ -1152,9 +1164,9 @@
             return nElement;
         },
 
-        getCoordinatesForPercent(percent) {
-            const x = Math.cos(2 * Math.PI * percent);
-            const y = Math.sin(2 * Math.PI * percent);
+        getCoordinatesForPercent(radius, percent) {
+            const x = radius * Math.cos(2 * Math.PI * percent);
+            const y = radius * Math.sin(2 * Math.PI * percent);
 
             return {x: x, y: y};
         },

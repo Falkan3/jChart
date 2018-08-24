@@ -144,6 +144,20 @@
                     value: 199
                 },
                 {
+                    value: 250,
+                    color: {
+                        normal: '#ba82dd',
+                        active: '#d998ff',
+                    },
+                },
+                {
+                    value: 58,
+                    color: {
+                        normal: '#dd5640',
+                        active: '#f45a42',
+                    },
+                },
+                {
                     value: 363,
                     color: {
                         normal: '#77dd4f',
@@ -152,10 +166,18 @@
                     draw: true, //false
                     push: true, //false
                 },
+                {
+                    value: 250,
+                    color: {
+                        normal: '#ba82dd',
+                        active: '#d998ff',
+                    },
+                },
             ],
             appearance: {
                 type: 'pie',
                 baseColor: '#ddd',
+				gap: 0.3
             },
             callbacks: {
                 onSegmentMouseover: function (did, segment) {
