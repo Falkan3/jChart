@@ -43,6 +43,8 @@
 	}
 
 	&__bar {
+		overflow: visible; // overflow set to visible for markers
+		
 		&__segment {
 			@extend %graph-segment;
 		}

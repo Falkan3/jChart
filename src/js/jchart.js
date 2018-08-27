@@ -32,7 +32,8 @@
                 group: null,
                 figure: null,
                 svg: null,
-                segments: []
+                segments: [],
+                markers: null,
             },
             data: [],
             values: {}, // values necessary for the graphing, like sum of values of all segments
@@ -87,6 +88,10 @@
                 gap: 1, // gap between segments for donut chart (in percentage, 1 = 1%)
 
                 /* BAR */
+                showMarkers: true,
+                markerColor: '#f45a42',
+                markerCount: 10,
+                markerWidth: 0.5, // in percentage of width - 0.5 means 0.5%
                 rx: 0, // horizontal corner radius
                 ry: 0 // vertical corner radius
             },
@@ -374,10 +379,17 @@
 
                     segments = instance._methods.drawBodySegmentBar(instance, data, values);
 
-                    markers = graphData['markers'];
-
                     svgElement = instance.settings.elements.body[0].appendChild(svg);
                     svgElement.appendChild(graphData['background']);
+                    if (graphData['markers'].group !== null) {
+                        const markersGroup = graphData['markers'].group;
+                        for (const index in graphData['markers'].markers) {
+                            if (graphData['markers'].markers.hasOwnProperty(index)) {
+                                markersGroup.appendChild(graphData['markers'].markers[index]);
+                            }
+                        }
+                        svgElement.appendChild(markersGroup);
+                    }
 
                     // animation loop
                     if (instance.settings.appearance.animated) {
@@ -573,7 +585,7 @@
             const defaults = {
                 type: 'circle', // ['path', 'circle']
                 isGauge: instance.settings.appearance.isGauge, // gauge chart for donut chart (top half of the circle only)
-                centerX : instance.settings.appearance.centerX,
+                centerX: instance.settings.appearance.centerX,
                 centerY: instance.settings.appearance.isGauge ? instance.settings.appearance.centerY / 2 : instance.settings.appearance.centerY
             };
             const settings = $.extend(true, {}, defaults, options);
@@ -864,7 +876,7 @@
             svg.setAttribute('style', 'transform: rotate(-0.25turn)'); //rotate 25% counter-clockwise so the start point is at the top
             svg.setAttributeNS("http://www.w3.org/2000/xmlns/", "xmlns:xlink", "http://www.w3.org/1999/xlink");
 
-            return {'svg': svg, 'markers': null};
+            return {'svg': svg};
         },
 
         drawBodySegmentPie(instance, data, values, options) {
@@ -880,7 +892,7 @@
             /* common vars */
             let gap = 0.00001;
             let baseGap = 0; // gap base value
-            if(instance.settings.appearance.gap && settings.drawableSegments > 1) {
+            if (instance.settings.appearance.gap && settings.drawableSegments > 1) {
                 gap = instance.settings.appearance.gap;
                 baseGap = gap * 0.1;
             }
@@ -970,7 +982,24 @@
                 fill: instance.settings.appearance.baseColor,
             }, false, null);
 
-            return {'svg': svg, 'background': background};
+            let markers = {group: null, markers: null};
+
+            if (instance.settings.appearance.showMarkers) {
+                markers.markers = [];
+                markers.group = instance._methods.drawGroup(instance, {class: `${instance._objPrefix}markers`});
+                const markerCount = instance.settings.appearance.markerCount;
+                for (let i = 0; i <= markerCount; i++) {
+                    let markerWidth = instance.settings.appearance.markerWidth,
+                        markerOffsetX = i * (100 / markerCount);
+                    markerOffsetX -= i === markerCount ? markerWidth : 0;
+
+                    const marker = instance._methods.drawSvgRect(instance, {width: markerWidth, height: '125%', x: markerOffsetX, fill: instance.settings.appearance.markerColor});
+                    markers.markers.push(marker);
+                }
+            }
+            instance.settings.elements.markers = markers;
+
+            return {'svg': svg, 'background': background, 'markers': markers};
         },
 
         drawBodySegmentBar(instance, data, values, options) {
