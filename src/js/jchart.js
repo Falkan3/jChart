@@ -991,7 +991,11 @@
                 for (let i = 0; i <= markerCount; i++) {
                     let markerWidth = instance.settings.appearance.markerWidth,
                         markerOffsetX = i * (100 / markerCount);
-                    markerOffsetX -= i === markerCount ? markerWidth : 0;
+                    // check if the current iteration is the last marker
+                    markerOffsetX -= (i === markerCount) ? markerWidth : 0;
+                    // check if the current iteration is the first or the last marker
+                    // only apply half marker width modifier for the middle markers
+                    markerOffsetX -= (i === 0 || i === markerCount) ? 0 : (markerWidth / 2);
 
                     const marker = instance._methods.drawSvgRect(instance, {width: markerWidth, height: '125%', x: markerOffsetX, fill: instance.settings.appearance.markerColor});
                     markers.markers.push(marker);
