@@ -53,10 +53,11 @@
 	<div id="element3" class="element"></div>
 	<div id="element4" class="element"></div>
 	<div id="element5" class="element"></div>
+	<div id="element6" class="element"></div>
 </div>
 
 <script>
-    let jchart1, jchart2, jchart3;
+    let jchart1, jchart2, jchart3, jchart4, jchart5, jchart6;
     $(function () {
         jchart1 = $("#element1").jChart({
             data: [
@@ -238,6 +239,30 @@
                     // console.log(segment);
                 }
             }
+        });
+        jchart6 = $("#element6").jChart({
+            data: [
+                {
+                    title: '1',
+                    value: 0
+                },
+                {
+                    title: '2',
+                    value: 0,
+                    draw: false
+                },
+            ],
+            appearance: {
+                type: 'donut',
+                subType: 'path',
+                baseColor: '#f4f4f4',
+                gap: 1,
+                baseStrokeWidth: 0.5,
+
+                title: {
+                    showSummary: true,
+                }
+            },
         });
     });
 </script>

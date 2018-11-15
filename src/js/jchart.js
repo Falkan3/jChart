@@ -348,8 +348,10 @@
                             } else {
                                 // if no summary segment id is specified, show the percentage of the segment with the greatest value
                                 const drawableSegments = instance._methods.getDrawableSegments(instance, data, true);
-                                const percentage = Math.round(drawableSegments[0].percentage * 10) / 10;
-                                instance.settings.elements.summary.innerHTML = `${percentage}%`;
+                                if(drawableSegments.length) {
+                                    const percentage = Math.round(drawableSegments[0].percentage * 10) / 10;
+                                    instance.settings.elements.summary.innerHTML = `${percentage}%`;
+                                }
                             }
                         }
                     }
