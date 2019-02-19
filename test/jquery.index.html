@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>jChart - jQuery version</title>
+
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+	<!-- Jquery -->
+	<script
+	  src="https://code.jquery.com/jquery-3.2.1.min.js"
+	  integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+	  crossorigin="anonymous"></script>
+
+	<!-- Main -->
+	<script src="../src/js/jquery.jchart.js" type="text/javascript"></script>
+	<link rel="stylesheet" type="text/css" href="../dist/css/style.css">
+	<!-- /Main -->
+
+	<link href="https://fonts.googleapis.com/css?family=Oswald:300,400,500&amp;subset=latin-ext" rel="stylesheet">
+
+	<style type="text/css">
+		html {
+			font-size: 14px;
+		}
+
+		body {
+			position: relative;
+			min-height: 100vh;
+			margin: 0;
+			background: #fff;
+			overflow-x: hidden;
+		}
+
+		.element {
+			display: inline-block;
+			width: 400px;
+			height: 400px;
+			vertical-align: top;
+		}
+
+		* {
+			-webkit-box-sizing: border-box;
+			-moz-box-sizing: border-box;
+			box-sizing: border-box;
+		}
+	</style>
+</head>
+<body>
+
+<div class="container">
+	<div id="element1" class="element"></div>
+	<div id="element2" class="element"></div>
+	<div id="element3" class="element"></div>
+	<div id="element4" class="element"></div>
+	<div id="element5" class="element"></div>
+	<div id="element6" class="element"></div>
+</div>
+
+<script>
+    let jchart1, jchart2, jchart3, jchart4, jchart5, jchart6;
+    $(function () {
+        jchart1 = $("#element1").jChart({
+            data: [
+                {
+                    value: 300
+                },
+                {
+                    value: 1500,
+                    color: {
+                        normal: '#77dd4f',
+                        active: '#b0ff9f',
+                    },
+                    draw: true, //false
+                    push: true, //false
+                },
+                {
+                    value: 755,
+                    color: {
+                        normal: '#dd5723',
+                        active: '#fa6025',
+                    },
+                    order: 1
+                }
+            ],
+            appearance: {
+                type: 'donut',
+                subType: 'path',
+                baseColor: '#ddd',
+				radius: 125 / (2 * Math.PI),
+                gap: 1,
+                baseStrokeWidth: 0.5,
+				// animated: false
+
+				title: {
+                    showSummary: true,
+					summarySegment: 2
+				}
+            },
+            callbacks: {
+                onSegmentMouseover: function (did, segment) {
+                    // console.log(did);
+                    // console.log(segment);
+                }
+            }
+        });
+        jchart2 = $("#element2").jChart({
+            data: [
+                {
+                    value: 300
+                },
+                {
+                    value: 100,
+                    color: {
+                        normal: '#77dd4f',
+                        active: '#b0ff9f',
+                    },
+                    draw: true, //false
+                    push: true, //false
+                },
+                {
+                    value: 100,
+                    color: {
+                        normal: '#dd5723',
+                        active: '#fa6025',
+                    },
+                    order: 1
+                }
+            ],
+            appearance: {
+                type: 'donut',
+                baseColor: '#000',
+                gap: 0.5,
+                baseStrokeWidth: 4
+            },
+            callbacks: {
+                onSegmentMouseover: function (did, segment) {
+                    // console.log(did);
+                    // console.log(segment);
+                }
+            }
+        });
+        jchart3 = $("#element3").jChart({
+            data: [
+                {
+                    value: 199
+                },
+                {
+                    value: 250,
+                    color: {
+                        normal: '#ba82dd',
+                        active: '#d998ff',
+                    },
+                },
+                {
+                    value: 58,
+                    color: {
+                        normal: '#dd5640',
+                        active: '#f45a42',
+                    },
+                },
+                {
+                    value: 363,
+                    color: {
+                        normal: '#77dd4f',
+                        active: '#b0ff9f',
+                    },
+                    draw: true, //false
+                    push: true, //false
+                },
+                {
+                    value: 250,
+                    color: {
+                        normal: '#ba82dd',
+                        active: '#d998ff',
+                    },
+                },
+            ],
+            appearance: {
+                type: 'pie',
+                baseColor: '#ddd',
+				gap: 0.3
+            },
+            callbacks: {
+                onSegmentMouseover: function (did, segment) {
+                    // console.log(did);
+                    // console.log(segment);
+                }
+            }
+        });
+        jchart4 = $("#element4").jChart({
+            data: [
+                {
+                    value: 300
+                },
+            ],
+            appearance: {
+                type: 'donut',
+                subType: 'path',
+				isGauge: true,
+                baseColor: '#ddd',
+                gap: 1,
+                baseStrokeWidth: 0.5,
+
+                title: {
+                    showSummary: true,
+                    //summarySegment: 0
+                }
+            },
+            callbacks: {
+                onSegmentMouseover: function (did, segment) {
+                    // console.log(did);
+                    // console.log(segment);
+                }
+            }
+        });
+        jchart5 = $("#element5").jChart({
+            data: [
+                {
+                    value: 300
+                },
+                {
+                    value: 300,
+                    color: {
+                        normal: '#77dd4f',
+                        active: '#b0ff9f',
+                    },
+                },
+            ],
+            appearance: {
+                type: 'bar',
+                baseColor: '#ddd',
+                gap: 1,
+                baseStrokeWidth: 0.5,
+                animated: true,
+            },
+            callbacks: {
+                onSegmentMouseover: function (did, segment) {
+                    // console.log(did);
+                    // console.log(segment);
+                }
+            }
+        });
+        jchart6 = $("#element6").jChart({
+            data: [
+                {
+                    title: '1',
+                    value: 0
+                },
+                {
+                    title: '2',
+                    value: 0,
+                    draw: false
+                },
+            ],
+            appearance: {
+                type: 'donut',
+                subType: 'path',
+                baseColor: '#f4f4f4',
+                gap: 1,
+                baseStrokeWidth: 0.5,
+
+                title: {
+                    showSummary: true,
+                }
+            },
+        });
+    });
+</script>
+</body>
+</html>
