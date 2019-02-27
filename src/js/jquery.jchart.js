@@ -793,7 +793,7 @@
                                 endY2 = centerY + Math.sin(startRadius) * cutoutRadius;
 
                             // draw the segment only if it's set to be drawn and its data value is greater than 0
-                            if (data[segment]['draw'] === true  && data[segment]['value'] > 0) {
+                            if (data[segment]['draw'] === true  && data[segment]['value'] > 0 && segmentAngle > 0) {
                                 const cmd = [
                                     'M', startX, startY, // Move pointer
                                     'A', doughnutRadius, doughnutRadius, 0, largeArc, 1, endX, endY, // Draw outer arc path
@@ -858,7 +858,7 @@
                                 }
                             }
 
-                            if (data[segment]['push'] === true) {
+                            if (data[segment]['push'] === true  && segmentAngle > 0) {
                                 startRadius += segmentAngle + gapAngle;
                             }
                         }
