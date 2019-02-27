@@ -80,21 +80,28 @@
                         active: '#fa6025',
                     },
                     order: 1
+                },
+                {
+                    value: 30,
+                    color: {
+                        normal: '#62fffa',
+                        active: '#8ffff2',
+                    }
                 }
             ],
             appearance: {
                 type: 'donut',
                 subType: 'path',
                 baseColor: '#ddd',
-				radius: 125 / (2 * Math.PI),
+                radius: 125 / (2 * Math.PI),
                 gap: 1,
                 baseStrokeWidth: 0.5,
-				// animated: false
+                // animated: false
 
-				title: {
+                title: {
                     showSummary: true,
-					summarySegment: 2
-				}
+                    summarySegment: 2
+                }
             },
             callbacks: {
                 onSegmentMouseover: function (did, segment) {
@@ -124,6 +131,13 @@
                         active: '#fa6025',
                     },
                     order: 1
+                },
+                {
+                    value: 3,
+                    color: {
+                        normal: '#62fffa',
+                        active: '#8ffff2',
+                    }
                 }
             ],
             appearance: {
@@ -263,7 +277,7 @@
                     showSummary: true,
                 }
             },
-        });
+        })
     });
 </script>
 </body>

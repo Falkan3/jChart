@@ -692,7 +692,8 @@
                         if (data.hasOwnProperty(segment)) {
                             const local_offset = (100 - data[segment]['percentage'] * settings.modifier);
 
-                            if (data[segment]['draw'] === true) {
+                            // draw the segment only if it's set to be drawn and its data value is greater than 0
+                            if (data[segment]['draw'] === true && data[segment]['value'] > 0) {
                                 // svg settings for both draw and update
                                 let svgCircleOptions = {};
 
@@ -724,7 +725,7 @@
                                         fill: 'transparent',
                                         stroke: data[segment]['color']['normal'],
                                         'stroke-width': data[segment]['strokeWidth'],
-                                        'stroke-dasharray': (data[segment]['percentage'] * settings.modifier - gap) + ' ' + (local_offset + gap),// '85 15',
+                                        'stroke-dasharray': Math.max((data[segment]['percentage'] * settings.modifier - gap), 0) + ' ' + (local_offset + gap),// '85 15',
                                         'stroke-dashoffset': base_offset + offset
                                     };
                                 } else {
@@ -736,7 +737,7 @@
                                         fill: 'transparent',
                                         stroke: data[segment]['color']['normal'],
                                         'stroke-width': data[segment]['strokeWidth'],
-                                        'stroke-dasharray': (data[segment]['percentage'] * settings.modifier - gap) + ' ' + (local_offset + gap),// '85 15',
+                                        'stroke-dasharray': Math.max((data[segment]['percentage'] * settings.modifier - gap), 0) + ' ' + (local_offset + gap),// '85 15',
                                         'stroke-dashoffset': base_offset + offset
                                     };
                                 }
@@ -779,7 +780,7 @@
                     for (const segment in data) {
                         if (data.hasOwnProperty(segment)) {
                             const gapAngle = gapPercent * rad,
-                                segmentAngle = settings.modifier * ((data[segment]['percentage_raw'] - gapForSegment) * rad),
+                                segmentAngle = settings.modifier * (Math.max((data[segment]['percentage_raw'] - gapForSegment), 0) * rad),
                                 endRadius = startRadius + segmentAngle,
                                 largeArc = ((endRadius - startRadius) % rad) > Math.PI ? 1 : 0,
                                 startX = centerX + Math.cos(startRadius) * doughnutRadius,
@@ -791,7 +792,8 @@
                                 endX2 = centerX + Math.cos(startRadius) * cutoutRadius,
                                 endY2 = centerY + Math.sin(startRadius) * cutoutRadius;
 
-                            if (data[segment]['draw'] === true) {
+                            // draw the segment only if it's set to be drawn and its data value is greater than 0
+                            if (data[segment]['draw'] === true  && data[segment]['value'] > 0) {
                                 const cmd = [
                                     'M', startX, startY, // Move pointer
                                     'A', doughnutRadius, doughnutRadius, 0, largeArc, 1, endX, endY, // Draw outer arc path
@@ -908,7 +910,8 @@
                 if (data.hasOwnProperty(segment)) {
                     const percentage = settings.modifier * data[segment]['percentage_raw'];
 
-                    if (data[segment]['draw'] === true) {
+                    // draw the segment only if it's set to be drawn and its data value is greater than 0
+                    if (data[segment]['draw'] === true  && data[segment]['value'] > 0) {
                         const startCoordinates = instance._methods.getCoordinatesForPercent(1, base_offset + offset + gapPercent);
                         const endCoordinates = instance._methods.getCoordinatesForPercent(1, base_offset + offset + percentage - gapPercent);
                         const largeArcFlag = settings.modifier * (data[segment]['percentage_raw']) > .5 ? 1 : 0;
@@ -1022,7 +1025,8 @@
 
             for (const segment in data) {
                 if (data.hasOwnProperty(segment)) {
-                    if (data[segment]['draw'] === true) {
+                    // draw the segment only if it's set to be drawn and its data value is greater than 0
+                    if (data[segment]['draw'] === true  && data[segment]['value'] > 0) {
                         const startCoordinates = base_offset + offset;
                         const width = data[segment]['percentage'] * settings.modifier;
 
