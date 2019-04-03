@@ -53,7 +53,7 @@
             },
             appearance: {
                 type: 'donut',
-                baseColor: '#ddd',
+                baseColor: 'transparent', // no base by default
                 segmentColor: {
                     normal: '#00a3f2',
                     active: '#00d8f2',
@@ -302,7 +302,7 @@
                     svgElement = instance.settings.elements.body[0].appendChild(svg);
                     svgElement.appendChild(graphData['ring']);
 
-                    switch (instance.settings.appearance.type) {
+                    switch (instance.settings.appearance.subType) {
                         /* donut chart - circle */
                         case 'circle':
                             break;
@@ -933,6 +933,23 @@
 
                         let drawOnly = false;
                         let element = null;
+
+                        // format the segment title
+                        const titlePartials = {
+                            'segmentTitle': data[segment]['title'],
+                            'segmentValue': instance._methods.numberFormat(data[segment]['value'], 0, ',', '\xa0'),
+                            'segmentPercentage': Math.round(data[segment]['percentage'] * 10) / 10
+                        };
+                        let title = titlePartials.segmentTitle;
+                        if (instance.settings.appearance.title.showValue && instance.settings.appearance.title.showPercentage) {
+                            title += `: ${titlePartials.segmentValue} (${titlePartials.segmentPercentage}%)`;
+                        } else if (instance.settings.appearance.title.showValue) {
+                            title += `: ${titlePartials.segmentValue}`;
+                        } else if (instance.settings.appearance.title.showPercentage) {
+                            title += `: ${titlePartials.segmentPercentage}%`;
+                        }
+                        //
+
                         if (settings.updateOnly) {
                             drawOnly = true;
                             element = data[segment]['element'][0];
@@ -947,7 +964,7 @@
                             svgPathOptions = {
                                 'd-id': segment,
                                 class: `${instance._objPrefix}pie__segment`,
-
+                                title: title,
                                 fill: data[segment]['color']['normal'],
                                 d: pathData
                             };
